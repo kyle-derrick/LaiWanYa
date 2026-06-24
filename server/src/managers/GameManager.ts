@@ -1,5 +1,6 @@
 import { GameState, GameStatus, GameResult, GameType } from '../types';
 import { UnoGame } from '../games/uno/UnoGame';
+import { MonopolyGame } from '../games/monopoly/MonopolyGame';
 
 export interface Game {
   getState(): GameState;
@@ -11,6 +12,7 @@ export interface Game {
   getPublicState(): Record<string, unknown>;
   getPlayerState(playerId: string): Record<string, unknown>;
   getResult(): GameResult | null;
+  setNicknames?(nicknameMap: Record<string, string>): void;
 }
 
 export class GameManager {
@@ -24,7 +26,8 @@ export class GameManager {
         game = new UnoGame(playerIds);
         break;
       case GameType.MONOPOLY:
-        throw new Error('Monopoly not implemented yet');
+        game = new MonopolyGame(playerIds);
+        break;
       case GameType.MAHJONG:
         throw new Error('Mahjong not implemented yet');
       default:

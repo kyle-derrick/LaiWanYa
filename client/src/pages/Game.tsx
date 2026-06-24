@@ -1,12 +1,42 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { UnoGameState, UnoColor } from '../types';
+import { UnoGameState, UnoColor, GameType } from '../types';
 import { socket } from '../hooks/useSocket';
 import UnoCardComponent from '../components/UnoCard';
+import MonopolyGame from '../components/monopoly/MonopolyGame';
 
 export default function Game() {
   const { roomId } = useParams<{ roomId: string }>();
   const navigate = useNavigate();
+  const [gameType, setGameType] = useState<GameType | null>(null);
+
+  // Determine game type from room info
+  useEffect(() => {
+    if (!roomId || !socket) return;
+
+    const onRoomInfo = (data: { room: { gameType: GameType } }) => {
+      setGameType(data.room.gameType);
+    };
+
+    socket.on('roomInfo', onRoomInfo);
+    socket.emit('getRoomInfo', { roomId });
+
+    return () => {
+      socket.off('roomInfo', onRoomInfo);
+    };
+  }, [roomId]);
+
+  // Route to the correct game component
+  if (gameType === GameType.MONOPOLY) {
+    return <MonopolyGame />;
+  }
+
+  // Default: UNO game (or loading)
+  return <UnoGameView roomId={roomId} navigate={navigate} />;
+}
+
+// UNO game component extracted for clarity
+function UnoGameView({ roomId, navigate }: { roomId: string | undefined; navigate: ReturnType<typeof useNavigate> }) {
   const [gameState, setGameState] = useState<UnoGameState | null>(null);
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [pendingCardIndex, setPendingCardIndex] = useState<number | null>(null);

@@ -122,6 +122,15 @@ export function setupSocketHandlers(
         room.players.map(p => p.id)
       );
 
+      // Set nicknames for games that support it
+      if (game.setNicknames) {
+        const nicknameMap: Record<string, string> = {};
+        for (const p of room.players) {
+          nicknameMap[p.id] = p.nickname;
+        }
+        game.setNicknames(nicknameMap);
+      }
+
       roomManager.setRoomStatus(room.id, RoomStatus.PLAYING);
 
       // Send game state to each player (with their hand)
@@ -170,6 +179,21 @@ export function setupSocketHandlers(
       if (!room) return;
 
       const result = gameManager.handleGameAction(room.id, socket.id, 'callUno');
+      if (!result.success) {
+        socket.emit('error', { message: result.error });
+        return;
+      }
+
+      // Broadcast updated state
+      broadcastGameState(io, roomManager, gameManager, room.id);
+    });
+
+    // Monopoly game actions
+    socket.on('monopoly:action', (data: { action: string; data?: unknown }) => {
+      const room = roomManager.getPlayerRoom(socket.id);
+      if (!room) return;
+
+      const result = gameManager.handleGameAction(room.id, socket.id, data.action, data.data);
       if (!result.success) {
         socket.emit('error', { message: result.error });
         return;
