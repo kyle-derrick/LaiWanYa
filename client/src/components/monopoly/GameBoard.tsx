@@ -30,19 +30,19 @@ for (let row = 0; row < 11; row++) {
 
 function getSquareBgColor(square: BoardSquare): string {
   if (square.color && square.type === SquareType.PROPERTY) {
-    return PROPERTY_COLOR_MAP[square.color] || '#f3f4f6';
+    return PROPERTY_COLOR_MAP[square.color] || '#2d2d2d';
   }
   switch (square.type) {
-    case SquareType.GO: return '#ffcccc';
-    case SquareType.JAIL: return '#ffcc99';
-    case SquareType.FREE_PARKING: return '#ccffcc';
-    case SquareType.GO_TO_JAIL: return '#ccccff';
-    case SquareType.CHANCE: return '#ffffcc';
-    case SquareType.COMMUNITY_CHEST: return '#cce5ff';
-    case SquareType.TAX: return '#f0e6d3';
-    case SquareType.RAILROAD: return '#dddddd';
-    case SquareType.UTILITY: return '#e8e8e8';
-    default: return '#f3f4f6';
+    case SquareType.GO: return '#4a1a1a';
+    case SquareType.JAIL: return '#3d2e1a';
+    case SquareType.FREE_PARKING: return '#1a3d1a';
+    case SquareType.GO_TO_JAIL: return '#1a1a4a';
+    case SquareType.CHANCE: return '#3d3d1a';
+    case SquareType.COMMUNITY_CHEST: return '#1a2d4a';
+    case SquareType.TAX: return '#3d2a1a';
+    case SquareType.RAILROAD: return '#2a2a2a';
+    case SquareType.UTILITY: return '#333333';
+    default: return '#2d2d2d';
   }
 }
 
@@ -76,23 +76,21 @@ export default function GameBoard({
     }
   }
 
-  // Determine which border each non-corner edge cell needs
-  // Top row (row=0): bottom border
-  // Bottom row (row=10): top border
-  // Left col (col=0): right border
-  // Right col (col=10): left border
   function getCellBorder(row: number, col: number): string {
     if (!isEdge(row, col)) return '';
-    if (isCorner(row, col)) return 'border border-gray-400';
-    if (row === 0) return 'border-b border-r border-l border-gray-400';
-    if (row === 10) return 'border-t border-r border-l border-gray-400';
-    if (col === 0) return 'border-t border-r border-b border-gray-400';
-    if (col === 10) return 'border-t border-l border-b border-gray-400';
+    if (isCorner(row, col)) return 'border border-amber-800/60';
+    if (row === 0) return 'border-b border-r border-l border-amber-800/60';
+    if (row === 10) return 'border-t border-r border-l border-amber-800/60';
+    if (col === 0) return 'border-t border-r border-b border-amber-800/60';
+    if (col === 10) return 'border-t border-l border-b border-amber-800/60';
     return '';
   }
 
   return (
-    <div className="bg-green-100 rounded-lg p-2 shadow-lg">
+    <div className="rounded-xl p-3 shadow-2xl" style={{
+      background: 'linear-gradient(145deg, #1a3a1a, #0d260d)',
+      boxShadow: 'inset 0 0 60px rgba(0,0,0,0.4), 0 10px 40px rgba(0,0,0,0.6)'
+    }}>
       <div
         className="grid gap-0"
         style={{
@@ -106,17 +104,20 @@ export default function GameBoard({
       >
         {gridCells.map(({ row, col, squareIndex }) => {
           if (squareIndex === null) {
-            // Center area - show game title / free parking pot
             return (
               <div
                 key={`${row}-${col}`}
-                className="bg-green-200 flex items-center justify-center"
-                style={{ gridRow: row + 1, gridColumn: col + 1 }}
+                className="flex items-center justify-center"
+                style={{
+                  gridRow: row + 1,
+                  gridColumn: col + 1,
+                  background: 'radial-gradient(circle, #1a3a1a 0%, #0d1f0d 100%)'
+                }}
               >
                 {row === 5 && col === 5 && (
                   <div className="text-center">
-                    <div className="text-lg font-bold text-green-800">大富翁</div>
-                    <div className="text-xs text-green-600">MONOPOLY</div>
+                    <div className="text-xl font-bold text-amber-300 drop-shadow-lg">大富翁</div>
+                    <div className="text-xs text-amber-500/70 font-medium tracking-widest">MONOPOLY</div>
                   </div>
                 )}
               </div>
@@ -129,7 +130,6 @@ export default function GameBoard({
           const ownership = ownershipMap.get(squareIndex);
           const playersHere = playerPositionMap.get(squareIndex) || [];
 
-          // Color strip position
           const showColorStrip = square.type === SquareType.PROPERTY || square.type === SquareType.RAILROAD || square.type === SquareType.UTILITY;
           let stripClass = '';
           if (showColorStrip) {
@@ -144,7 +144,7 @@ export default function GameBoard({
           return (
             <div
               key={`${row}-${col}`}
-              className={`${getCellBorder(row, col)} relative flex flex-col items-center justify-center cursor-pointer hover:brightness-90 transition-all overflow-hidden ${stripClass}`}
+              className={`${getCellBorder(row, col)} relative flex flex-col items-center justify-center cursor-pointer transition-all overflow-hidden ${stripClass}`}
               style={{
                 gridRow: row + 1,
                 gridColumn: col + 1,
@@ -153,14 +153,23 @@ export default function GameBoard({
                 ...(showColorStrip && row === 10 ? { borderTopColor: borderColor } : {}),
                 ...(showColorStrip && row === 0 ? { borderBottomColor: borderColor } : {}),
                 ...(showColorStrip && col === 0 ? { borderRightColor: borderColor } : {}),
-                ...(showColorStrip && col === 10 ? { borderLeftColor: borderColor } : {})
+                ...(showColorStrip && col === 10 ? { borderLeftColor: borderColor } : {}),
+                boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.05), inset 0 -1px 2px rgba(0,0,0,0.3)'
               }}
               onClick={() => onSquareClick?.(squareIndex)}
               title={`${square.name}${square.price ? ` - $${square.price}` : ''}`}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.filter = 'brightness(1.2)';
+                e.currentTarget.style.boxShadow = 'inset 0 1px 2px rgba(255,255,255,0.1), 0 0 8px rgba(255,215,0,0.3)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.filter = '';
+                e.currentTarget.style.boxShadow = 'inset 0 1px 2px rgba(255,255,255,0.05), inset 0 -1px 2px rgba(0,0,0,0.3)';
+              }}
             >
               {/* Square name */}
               <span
-                className={`text-center leading-tight font-medium ${
+                className={`text-center leading-tight font-medium text-gray-200 ${
                   isCornerCell ? 'text-[9px]' : 'text-[7px]'
                 } truncate w-full px-0.5`}
               >
@@ -169,17 +178,17 @@ export default function GameBoard({
 
               {/* Price or icon */}
               {square.price && square.type !== SquareType.TAX && (
-                <span className="text-[6px] text-gray-600">${square.price}</span>
+                <span className="text-[6px] text-amber-400/80 font-medium">${square.price}</span>
               )}
               {square.type === SquareType.TAX && square.price && (
-                <span className="text-[6px] text-red-600">-${square.price}</span>
+                <span className="text-[6px] text-red-400 font-medium">-${square.price}</span>
               )}
 
               {/* Houses indicator */}
               {ownership && ownership.houses > 0 && (
                 <div className="absolute top-0 right-0 flex">
                   {ownership.houses === 5 ? (
-                    <span className="text-[8px] bg-red-600 text-white px-0.5 rounded-bl">🏨</span>
+                    <span className="text-[8px] bg-red-600 text-white px-0.5 rounded-bl shadow-sm">🏨</span>
                   ) : (
                     <span className="text-[7px]">{'🏠'.repeat(ownership.houses)}</span>
                   )}
@@ -188,19 +197,20 @@ export default function GameBoard({
 
               {/* Mortgage indicator */}
               {ownership?.isMortgaged && (
-                <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
-                  <span className="text-[8px] text-white font-bold">M</span>
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center backdrop-blur-[1px]">
+                  <span className="text-[8px] text-red-300 font-bold">M</span>
                 </div>
               )}
 
               {/* Owner indicator */}
               {ownership && !ownership.isMortgaged && (
                 <div
-                  className="absolute bottom-0 left-0 w-2 h-2 rounded-full border border-white"
+                  className="absolute bottom-0 left-0 w-2 h-2 rounded-full border border-white/50"
                   style={{
                     backgroundColor: players.find(p => p.id === ownership.ownerId)
                       ? PLAYER_COLORS[players.findIndex(p => p.id === ownership.ownerId) % PLAYER_COLORS.length]
-                      : '#9ca3af'
+                      : '#9ca3af',
+                    boxShadow: '0 0 4px rgba(0,0,0,0.5)'
                   }}
                 />
               )}
@@ -213,13 +223,16 @@ export default function GameBoard({
                     return (
                       <div
                         key={p.id}
-                        className={`w-3 h-3 rounded-full border border-white ${
-                          p.id === currentPlayerId ? 'ring-1 ring-yellow-400' : ''
+                        className={`w-3 h-3 rounded-full border border-white/70 ${
+                          p.id === currentPlayerId ? 'ring-1 ring-yellow-400 animate-pulse' : ''
                         }`}
                         style={{
                           backgroundColor: PLAYER_COLORS[pIdx % PLAYER_COLORS.length],
                           marginTop: '-2px',
-                          marginLeft: idx > 0 ? '-4px' : '0'
+                          marginLeft: idx > 0 ? '-4px' : '0',
+                          boxShadow: p.id === currentPlayerId
+                            ? '0 0 6px rgba(255,215,0,0.8), 0 0 12px rgba(255,215,0,0.4)'
+                            : '0 1px 3px rgba(0,0,0,0.5)'
                         }}
                         title={p.nickname || p.id}
                       />
@@ -230,7 +243,7 @@ export default function GameBoard({
 
               {/* Special icons for corner squares */}
               {isCornerCell && (
-                <span className="text-lg absolute opacity-20">
+                <span className="text-lg absolute opacity-30 drop-shadow-lg">
                   {SQUARE_ICONS[square.type] || ''}
                 </span>
               )}

@@ -18,13 +18,10 @@ interface GameBoardProps {
   myMelds: Meld[];
 }
 
-// Get the relative position of players (self at bottom, others around)
 function getRelativePositions(players: MahjongPlayerState[], myPlayerId: string) {
   const myIdx = players.findIndex(p => p.id === myPlayerId);
   if (myIdx === -1) return { bottom: null, right: null, top: null, left: null };
 
-  // In mahjong, positions are relative to the viewer:
-  // bottom = self, right = next player, top = opposite, left = previous
   const n = players.length;
   return {
     bottom: players[myIdx],
@@ -47,21 +44,34 @@ function OpponentArea({ player, position, isCurrentPlayer, color, lastDiscardPla
   const windLabel = WIND_LABELS[player.wind] || player.wind;
 
   return (
-    <div className={`
-      flex flex-col items-center gap-1 p-2 rounded-lg
-      ${isCurrentPlayer ? 'bg-emerald-800/40 ring-2 ring-yellow-400' : 'bg-emerald-900/20'}
-      ${isVertical ? 'min-w-[80px]' : 'min-w-[120px]'}
-    `}>
+    <div
+      className={`
+        flex flex-col items-center gap-1 p-2 rounded-xl backdrop-blur-sm
+        ${isVertical ? 'min-w-[80px]' : 'min-w-[120px]'}
+      `}
+      style={{
+        background: isCurrentPlayer
+          ? 'linear-gradient(145deg, rgba(45,90,58,0.6), rgba(26,61,37,0.6))'
+          : 'linear-gradient(145deg, rgba(30,60,40,0.4), rgba(15,40,25,0.4))',
+        border: isCurrentPlayer ? '1px solid rgba(234,179,8,0.5)' : '1px solid rgba(45,90,58,0.3)',
+        boxShadow: isCurrentPlayer
+          ? '0 0 20px rgba(234,179,8,0.2), inset 0 1px 2px rgba(255,255,255,0.05)'
+          : 'inset 0 1px 2px rgba(255,255,255,0.05)'
+      }}
+    >
       {/* Player info */}
       <div className="flex items-center gap-1.5">
         <div
           className="w-3 h-3 rounded-full"
-          style={{ backgroundColor: color }}
+          style={{
+            backgroundColor: color,
+            boxShadow: `0 0 6px ${color}60`
+          }}
         />
-        <span className="text-xs font-medium text-white truncate max-w-[80px]">
+        <span className="text-xs font-medium text-emerald-100 truncate max-w-[80px]">
           {player.nickname || player.id.substring(0, 6)}
         </span>
-        <span className="text-xs text-emerald-300">{windLabel}</span>
+        <span className="text-xs text-amber-400/80">{windLabel}</span>
       </div>
 
       {/* Hand (face down) */}
@@ -84,14 +94,14 @@ function OpponentArea({ player, position, isCurrentPlayer, color, lastDiscardPla
               key={tile.id || idx}
               tile={tile}
               small
-              className={lastDiscardPlayerId === player.id && idx === player.discards.slice(-6).length - 1 ? 'ring-2 ring-yellow-400' : ''}
+              className={lastDiscardPlayerId === player.id && idx === player.discards.slice(-6).length - 1 ? 'ring-2 ring-amber-400' : ''}
             />
           ))}
         </div>
       )}
 
       {/* Score */}
-      <span className="text-xs text-emerald-300">分: {player.score}</span>
+      <span className="text-xs text-amber-400/80 font-medium">分: {player.score}</span>
     </div>
   );
 }
@@ -116,27 +126,44 @@ export default function GameBoard({
   return (
     <div className="relative w-full aspect-square max-w-[700px] mx-auto">
       {/* Table background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-emerald-700 via-emerald-800 to-emerald-900 rounded-2xl border-4 border-emerald-600 shadow-2xl overflow-hidden">
-        {/* Table texture */}
-        <div className="absolute inset-0 opacity-10"
+      <div
+        className="absolute inset-0 rounded-2xl overflow-hidden"
+        style={{
+          background: 'linear-gradient(145deg, #1a4d2a, #0d3318, #1a4d2a)',
+          border: '4px solid #2d6a3a',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.6), inset 0 0 80px rgba(0,0,0,0.3)'
+        }}
+      >
+        {/* Table felt texture */}
+        <div className="absolute inset-0 opacity-20"
           style={{
-            backgroundImage: `radial-gradient(circle at 25% 25%, rgba(255,255,255,0.1) 1px, transparent 1px)`,
-            backgroundSize: '20px 20px'
+            backgroundImage: `
+              radial-gradient(circle at 25% 25%, rgba(255,255,255,0.08) 1px, transparent 1px),
+              radial-gradient(circle at 75% 75%, rgba(255,255,255,0.05) 1px, transparent 1px)
+            `,
+            backgroundSize: '12px 12px, 8px 8px'
           }}
         />
 
         {/* Center info */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="bg-emerald-900/60 rounded-xl p-4 text-center backdrop-blur-sm border border-emerald-600/30">
-            <div className="text-yellow-300 text-2xl font-bold mb-1">
+          <div
+            className="rounded-xl p-4 text-center backdrop-blur-sm"
+            style={{
+              background: 'linear-gradient(145deg, rgba(13,51,24,0.8), rgba(26,77,42,0.6))',
+              border: '1px solid rgba(45,106,58,0.4)',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.05)'
+            }}
+          >
+            <div className="text-amber-300 text-2xl font-bold mb-1 drop-shadow-lg">
               {roundWindLabel}风局
             </div>
-            <div className="text-emerald-200 text-sm">
-              余牌: <span className="font-bold text-white">{wallCount}</span>
+            <div className="text-emerald-300 text-sm">
+              余牌: <span className="font-bold text-emerald-100">{wallCount}</span>
             </div>
             {lastDiscard && (
               <div className="mt-2 flex items-center justify-center gap-1">
-                <span className="text-xs text-emerald-300">最后出牌:</span>
+                <span className="text-xs text-emerald-400/80">最后出牌:</span>
                 <TileComponent tile={lastDiscard} small />
               </div>
             )}
@@ -185,25 +212,38 @@ export default function GameBoard({
 
       {/* Bottom: My area */}
       <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-[90%]">
-        <div className={`
-          bg-emerald-900/40 rounded-xl p-3 backdrop-blur-sm border border-emerald-600/30
-          ${positions.bottom?.id === currentPlayerId ? 'ring-2 ring-yellow-400' : ''}
-        `}>
+        <div
+          className="rounded-xl p-3 backdrop-blur-sm"
+          style={{
+            background: positions.bottom?.id === currentPlayerId
+              ? 'linear-gradient(145deg, rgba(45,90,58,0.6), rgba(26,61,37,0.6))'
+              : 'linear-gradient(145deg, rgba(30,60,40,0.4), rgba(15,40,25,0.4))',
+            border: positions.bottom?.id === currentPlayerId
+              ? '1px solid rgba(234,179,8,0.5)'
+              : '1px solid rgba(45,90,58,0.3)',
+            boxShadow: positions.bottom?.id === currentPlayerId
+              ? '0 0 20px rgba(234,179,8,0.2), inset 0 1px 2px rgba(255,255,255,0.05)'
+              : 'inset 0 1px 2px rgba(255,255,255,0.05)'
+          }}
+        >
           {/* My info bar */}
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <div
                 className="w-3 h-3 rounded-full"
-                style={{ backgroundColor: PLAYER_COLORS[players.indexOf(positions.bottom!) % PLAYER_COLORS.length] }}
+                style={{
+                  backgroundColor: PLAYER_COLORS[players.indexOf(positions.bottom!) % PLAYER_COLORS.length],
+                  boxShadow: `0 0 6px ${PLAYER_COLORS[players.indexOf(positions.bottom!) % PLAYER_COLORS.length]}60`
+                }}
               />
-              <span className="text-sm font-medium text-white">
+              <span className="text-sm font-medium text-emerald-100">
                 {positions.bottom?.nickname || '你'}
               </span>
-              <span className="text-xs text-emerald-300">
+              <span className="text-xs text-amber-400/80">
                 {positions.bottom ? WIND_LABELS[positions.bottom.wind] : ''}
               </span>
             </div>
-            <span className="text-xs text-emerald-300">
+            <span className="text-xs text-amber-400/80 font-medium">
               分: {positions.bottom?.score || 0}
             </span>
           </div>

@@ -13,7 +13,6 @@ export default function Game() {
   const navigate = useNavigate();
   const [gameType, setGameType] = useState<GameType | null>(null);
 
-  // Determine game type from room info
   useEffect(() => {
     if (!roomId || !socket) return;
 
@@ -29,7 +28,6 @@ export default function Game() {
     };
   }, [roomId]);
 
-  // Route to the correct game component
   if (gameType === GameType.MONOPOLY) {
     return <MonopolyGame />;
   }
@@ -42,21 +40,28 @@ export default function Game() {
     return <LiarsBarGame />;
   }
 
-  // Default: UNO game (or loading)
   return <UnoGameView roomId={roomId} navigate={navigate} />;
 }
 
-// UNO game component extracted for clarity
+/* ──────────────────── UNO GAME VIEW ──────────────────── */
+
 function UnoGameView({ roomId, navigate }: { roomId: string | undefined; navigate: ReturnType<typeof useNavigate> }) {
   const { t } = useTranslation();
   const [gameState, setGameState] = useState<UnoGameState | null>(null);
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [pendingCardIndex, setPendingCardIndex] = useState<number | null>(null);
+  const [lastPlayedCard, setLastPlayedCard] = useState<string | null>(null);
 
   useEffect(() => {
     if (!roomId || !socket) return;
 
-    const onGameState = (state: UnoGameState) => setGameState(state);
+    const onGameState = (state: UnoGameState) => {
+      // Detect card play for animation
+      if (state.currentCard && state.currentCard.id !== lastPlayedCard) {
+        setLastPlayedCard(state.currentCard.id);
+      }
+      setGameState(state);
+    };
     const onGameStarted = (data: { roomId: string; gameState: UnoGameState }) => {
       setGameState(data.gameState);
     };
@@ -74,10 +79,8 @@ function UnoGameView({ roomId, navigate }: { roomId: string | undefined; navigat
     socket.on('gameFinished', onGameFinished);
     socket.on('error', onError);
 
-    // Request game state on mount (in case we missed the gameStarted event)
     socket.emit('getGameState', { roomId });
 
-    // Poll game state as fallback
     const pollInterval = setInterval(() => {
       socket.emit('getGameState', { roomId });
     }, 2000);
@@ -130,10 +133,17 @@ function UnoGameView({ roomId, navigate }: { roomId: string | undefined; navigat
     navigate('/');
   };
 
+  /* ── Loading state ── */
   if (!gameState) {
     return (
-      <div className="max-w-4xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
-        <p className="text-center text-gray-500">{t('loadingRoom')}</p>
+      <div className="min-h-screen bg-gradient-to-br from-emerald-950 via-green-950 to-teal-950 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="relative w-16 h-16">
+            <div className="absolute inset-0 border-4 border-green-500/30 rounded-full" />
+            <div className="absolute inset-0 border-4 border-green-500 border-t-transparent rounded-full animate-spin" />
+          </div>
+          <p className="text-green-300/60 text-sm font-medium">{t('loadingRoom')}</p>
+        </div>
       </div>
     );
   }
@@ -141,158 +151,280 @@ function UnoGameView({ roomId, navigate }: { roomId: string | undefined; navigat
   const isMyTurn = gameState.currentPlayerId === socket?.id;
   const canCallUno = gameState.playerHand?.length === 2;
 
+  const colorDot = (color: string | null) => {
+    const map: Record<string, string> = {
+      RED: '#ef4444', YELLOW: '#eab308', GREEN: '#22c55e', BLUE: '#3b82f6',
+    };
+    return map[color || ''] || '#6b7280';
+  };
+
   return (
-    <div className="max-w-6xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-blue-600">{t('unoGame')}</h1>
+    <div className="min-h-screen bg-gradient-to-br from-emerald-950 via-green-950 to-teal-950 flex flex-col relative overflow-hidden">
+      {/* ── Background decoration ── */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-green-500/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-emerald-500/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-0 w-[300px] h-[300px] bg-teal-500/5 rounded-full blur-3xl" />
+        {/* Felt texture pattern */}
+        <div className="absolute inset-0 opacity-[0.03]"
+          style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '20px 20px' }}
+        />
+      </div>
+
+      {/* ── Top Bar ── */}
+      <div className="relative z-10 flex justify-between items-center px-6 py-3 bg-black/20 backdrop-blur-sm border-b border-white/5">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-sm font-bold text-white shadow-lg shadow-green-500/30">
+            UNO
+          </div>
+          <h1 className="text-lg font-bold text-white">{t('unoGame')}</h1>
+        </div>
+
         <div className="flex items-center gap-4">
-          <span className="text-sm text-gray-500">{t('room')}: {roomId}</span>
+          {/* Turn indicator */}
+          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold transition-all
+            ${isMyTurn
+              ? 'bg-green-500/20 text-green-400 border border-green-500/30 shadow-lg shadow-green-500/10 animate-pulse'
+              : 'bg-white/5 text-gray-400 border border-white/10'
+            }
+          `}>
+            <span className={`w-2 h-2 rounded-full ${isMyTurn ? 'bg-green-400' : 'bg-gray-600'}`} />
+            {isMyTurn ? t('yourTurn') : t('waitingForOthers')}
+          </div>
+
+          <span className="text-xs text-gray-500 font-mono">#{roomId}</span>
+
           <button
             onClick={handleLeaveGame}
-            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+            className="px-3 py-1.5 bg-white/5 border border-white/10 text-gray-400 rounded-lg hover:bg-red-500/20 hover:border-red-500/30 hover:text-red-400 transition-all text-sm"
           >
-            {t('leave')}
+            ✕ {t('leave')}
           </button>
         </div>
       </div>
 
-      <div className="mb-6 p-4 bg-gray-50 rounded-md">
-        <div className="flex justify-between items-center">
-          <div>
-            <p className="text-sm text-gray-600">
-              {t('direction')}: {gameState.direction === 1 ? t('clockwise') : t('counterclockwise')}
-            </p>
-            <p className="text-sm text-gray-600">
-              {t('drawPile')}: {gameState.drawPileCount} {t('cards')}
-            </p>
+      {/* ── Main game area ── */}
+      <div className="relative z-10 flex-1 flex flex-col max-w-6xl mx-auto w-full px-4 py-4">
+
+        {/* ── Game info bar ── */}
+        <div className="flex items-center justify-between mb-4 px-4 py-3 bg-black/20 backdrop-blur-sm rounded-2xl border border-white/5">
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2">
+              <span className="text-gray-500 text-xs">{t('direction')}</span>
+              <span className="text-white text-sm font-medium">
+                {gameState.direction === 1 ? '↻' : '↺'}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-gray-500 text-xs">{t('drawPile')}</span>
+              <span className="px-2 py-0.5 bg-emerald-800/50 text-emerald-300 text-sm font-bold rounded-lg">
+                {gameState.drawPileCount}
+              </span>
+            </div>
           </div>
-          <div className="text-right">
-            <p className="text-sm text-gray-600">
-              {t('currentColor')}:{' '}
-              <span
-                className="inline-block w-4 h-4 rounded-full align-middle"
-                style={{
-                  backgroundColor: gameState.currentColor === 'RED' ? '#ef4444' :
-                                   gameState.currentColor === 'YELLOW' ? '#eab308' :
-                                   gameState.currentColor === 'GREEN' ? '#22c55e' :
-                                   gameState.currentColor === 'BLUE' ? '#3b82f6' : '#6b7280'
-                }}
+
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-gray-500 text-xs">{t('currentColor')}</span>
+              <div
+                className="w-6 h-6 rounded-full border-2 border-white/30 shadow-lg"
+                style={{ backgroundColor: colorDot(gameState.currentColor), boxShadow: `0 0 12px ${colorDot(gameState.currentColor)}60` }}
               />
-            </p>
+            </div>
             {gameState.lastAction && (
-              <p className="text-xs text-gray-500 mt-1">{gameState.lastAction}</p>
+              <span className="text-xs text-gray-500 bg-white/5 px-2 py-1 rounded-lg">{gameState.lastAction}</span>
             )}
           </div>
         </div>
-      </div>
 
-      <div className="mb-6 text-center">
-        <h2 className="text-lg font-semibold mb-2">{t('currentCard')}</h2>
-        {gameState.currentCard && (
-          <UnoCardComponent card={gameState.currentCard} isPlayable={false} />
-        )}
-      </div>
-
-      <div className="mb-6">
-        <h2 className="text-lg font-semibold mb-2">{t('players')}</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {gameState.playerCount?.map((player) => (
-            <div
-              key={player.id}
-              className={`p-3 rounded-md ${
-                player.id === gameState.currentPlayerId
-                  ? 'bg-blue-100 border-2 border-blue-500'
-                  : 'bg-gray-50'
-              }`}
-            >
-              <p className="font-medium text-sm truncate">
-                {player.id === socket?.id ? t('you') : player.id.substring(0, 8)}
-              </p>
-              <p className="text-xs text-gray-500">
-                {player.cardCount} {t('cards')}
-                {player.hasCalledUno && ' - UNO!'}
-              </p>
+        {/* ── Center area: current card + draw pile ── */}
+        <div className="flex-1 flex items-center justify-center gap-8 mb-4">
+          {/* Draw pile */}
+          <div className="flex flex-col items-center gap-2">
+            <div className="w-20 h-28 rounded-xl bg-gradient-to-br from-gray-700 to-gray-800 border-2 border-white/10 shadow-xl flex items-center justify-center">
+              <div className="w-14 h-20 rounded-lg bg-gradient-to-br from-gray-600 to-gray-700 border border-white/10 flex items-center justify-center">
+                <span className="text-white/30 text-xs font-bold">UNO</span>
+              </div>
             </div>
-          ))}
-        </div>
-      </div>
+            <span className="text-xs text-gray-500">{gameState.drawPileCount} {t('cards')}</span>
+          </div>
 
-      <div className="mb-6">
-        <h2 className="text-lg font-semibold mb-2">{t('yourHand')}</h2>
-        <div className="flex flex-wrap gap-2 justify-center">
-          {gameState.playerHand?.map((card, index) => (
-            <UnoCardComponent
-              key={card.id}
-              card={card}
-              isPlayable={isMyTurn}
-              onClick={() => handlePlayCard(index)}
-            />
-          ))}
+          {/* Current card (discard pile) */}
+          <div className="flex flex-col items-center gap-2">
+            <div className="relative">
+              {gameState.currentCard && (
+                <div className="animate-card-play">
+                  <UnoCardComponent card={gameState.currentCard} isPlayable={false} large />
+                </div>
+              )}
+            </div>
+            <span className="text-xs text-gray-500">{t('currentCard')}</span>
+          </div>
         </div>
-      </div>
 
-      <div className="flex justify-center gap-4">
-        <button
-          onClick={handleDrawCard}
-          disabled={!isMyTurn}
-          className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-medium"
-        >
-          {t('drawCard')}
-        </button>
-        {canCallUno && (
+        {/* ── Players ── */}
+        <div className="mb-4 flex justify-center gap-3 flex-wrap">
+          {gameState.playerCount?.map((player) => {
+            const isActive = player.id === gameState.currentPlayerId;
+            const isMe = player.id === socket?.id;
+
+            return (
+              <div
+                key={player.id}
+                className={`relative flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-300
+                  ${isActive
+                    ? 'bg-green-500/15 border-2 border-green-500/50 shadow-lg shadow-green-500/10 scale-105'
+                    : 'bg-white/5 border border-white/10'
+                  }
+                `}
+              >
+                {/* Active glow */}
+                {isActive && (
+                  <div className="absolute inset-0 rounded-xl bg-green-500/5 animate-pulse pointer-events-none" />
+                )}
+
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white
+                  ${isActive ? 'bg-green-600' : 'bg-gray-700'}
+                `}>
+                  {isMe ? '🧑' : '👤'}
+                </div>
+
+                <div className="flex flex-col">
+                  <span className={`text-sm font-semibold ${isActive ? 'text-green-400' : 'text-gray-300'}`}>
+                    {isMe ? t('you') : player.id.substring(0, 6)}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500">
+                      {player.cardCount} {t('cards')}
+                    </span>
+                    {player.hasCalledUno && (
+                      <span className="text-xs font-bold text-red-400 animate-bounce">UNO!</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Card count visual */}
+                <div className="flex gap-0.5 ml-2">
+                  {Array.from({ length: Math.min(player.cardCount, 7) }).map((_, i) => (
+                    <div key={i} className="w-1.5 h-5 bg-white/20 rounded-sm -ml-1 first:ml-0" />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* ── Player hand ── */}
+        <div className="relative bg-black/20 backdrop-blur-sm rounded-2xl border border-white/5 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-gray-400">
+              {t('yourHand')} <span className="text-white">{gameState.playerHand?.length || 0}</span>
+            </h2>
+          </div>
+
+          <div className="flex flex-wrap gap-2 justify-center min-h-[120px] items-end">
+            {gameState.playerHand?.map((card, index) => (
+              <div
+                key={card.id}
+                className="transition-all duration-200"
+                style={{
+                  transform: `rotate(${(index - (gameState.playerHand?.length || 0) / 2) * 3}deg)`,
+                  transformOrigin: 'bottom center',
+                }}
+              >
+                <UnoCardComponent
+                  card={card}
+                  isPlayable={isMyTurn}
+                  onClick={() => handlePlayCard(index)}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Action buttons ── */}
+        <div className="flex justify-center gap-3 mt-4">
           <button
-            onClick={handleCallUno}
-            className="px-6 py-3 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 font-medium"
+            onClick={handleDrawCard}
+            disabled={!isMyTurn}
+            className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-green-600 text-white rounded-xl font-semibold text-sm
+              hover:from-emerald-500 hover:to-green-500 disabled:from-gray-700 disabled:to-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed
+              transition-all shadow-lg shadow-green-500/20 hover:shadow-green-500/40 active:scale-95"
           >
-            {t('callUno')}
+            🂠 {t('drawCard')}
           </button>
-        )}
+
+          {canCallUno && (
+            <button
+              onClick={handleCallUno}
+              className="px-8 py-3 bg-gradient-to-r from-red-600 to-orange-600 text-white rounded-xl font-black text-lg
+                hover:from-red-500 hover:to-orange-500 transition-all shadow-lg shadow-red-500/30 hover:shadow-red-500/50
+                active:scale-95 animate-pulse tracking-wider"
+            >
+              UNO!
+            </button>
+          )}
+        </div>
       </div>
 
-      <div className="mt-6 text-center">
-        {isMyTurn ? (
-          <p className="text-green-600 font-semibold">{t('yourTurn')}</p>
-        ) : (
-          <p className="text-gray-500">{t('waitingForOthers')}</p>
-        )}
-      </div>
-
+      {/* ── Color picker modal ── */}
       {showColorPicker && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-xl">
-            <h3 className="text-lg font-semibold mb-4">{t('chooseColor')}</h3>
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
+          <div className="bg-gray-900/95 backdrop-blur-xl p-8 rounded-3xl border border-white/10 shadow-2xl animate-scale-in max-w-sm w-full mx-4">
+            <h3 className="text-xl font-bold text-white text-center mb-6">
+              🎨 {t('chooseColor')}
+            </h3>
+
             <div className="grid grid-cols-2 gap-4">
-              {Object.values(UnoColor)
-                .filter((c) => c !== UnoColor.WILD)
-                .map((color) => (
-                  <button
-                    key={color}
-                    onClick={() => handleColorSelect(color)}
-                    className="px-6 py-3 rounded-md text-white font-medium"
-                    style={{
-                      backgroundColor:
-                        color === UnoColor.RED ? '#ef4444' :
-                        color === UnoColor.YELLOW ? '#eab308' :
-                        color === UnoColor.GREEN ? '#22c55e' :
-                        '#3b82f6',
-                    }}
-                  >
-                    {color}
-                  </button>
-                ))}
+              {[
+                { color: UnoColor.RED, gradient: 'from-red-500 to-red-700', glow: 'shadow-red-500/40', label: 'Red', emoji: '🔴' },
+                { color: UnoColor.YELLOW, gradient: 'from-yellow-400 to-yellow-600', glow: 'shadow-yellow-500/40', label: 'Yellow', emoji: '🟡' },
+                { color: UnoColor.GREEN, gradient: 'from-green-500 to-green-700', glow: 'shadow-green-500/40', label: 'Green', emoji: '🟢' },
+                { color: UnoColor.BLUE, gradient: 'from-blue-500 to-blue-700', glow: 'shadow-blue-500/40', label: 'Blue', emoji: '🔵' },
+              ].map(({ color, gradient, glow, label, emoji }) => (
+                <button
+                  key={color}
+                  onClick={() => handleColorSelect(color)}
+                  className={`group relative px-6 py-5 rounded-2xl bg-gradient-to-br ${gradient} text-white font-bold text-lg
+                    hover:scale-105 active:scale-95 transition-all shadow-lg ${glow} hover:shadow-xl`}
+                >
+                  <span className="text-2xl block mb-1">{emoji}</span>
+                  <span className="text-sm opacity-90">{label}</span>
+                </button>
+              ))}
             </div>
+
             <button
               onClick={() => {
                 setShowColorPicker(false);
                 setPendingCardIndex(null);
               }}
-              className="mt-4 w-full px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+              className="mt-6 w-full px-4 py-3 bg-white/5 border border-white/10 text-gray-400 rounded-xl hover:bg-white/10 hover:text-white transition-all font-medium"
             >
               {t('cancel')}
             </button>
           </div>
         </div>
       )}
+
+      {/* ── Custom animations ── */}
+      <style>{`
+        @keyframes fade-in {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes scale-in {
+          from { opacity: 0; transform: scale(0.9); }
+          to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes card-play {
+          0% { transform: translateY(60px) scale(0.8); opacity: 0; }
+          100% { transform: translateY(0) scale(1); opacity: 1; }
+        }
+        .animate-fade-in { animation: fade-in 0.2s ease-out; }
+        .animate-scale-in { animation: scale-in 0.3s ease-out; }
+        .animate-card-play { animation: card-play 0.4s ease-out; }
+      `}</style>
     </div>
   );
 }

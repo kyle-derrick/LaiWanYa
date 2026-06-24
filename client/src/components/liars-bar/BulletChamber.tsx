@@ -41,7 +41,7 @@ export default function BulletChamber({ firing, died, currentChamber }: BulletCh
       {/* Revolver cylinder */}
       <div className="relative w-40 h-40">
         {/* Outer circle */}
-        <div className="absolute inset-0 rounded-full border-4 border-gray-600 bg-gray-800 shadow-lg">
+        <div className="absolute inset-0 rounded-full border-4 border-stone-600/60 bg-stone-800/80 backdrop-blur-xl shadow-2xl shadow-black/40">
           {/* Chambers */}
           {Array.from({ length: CHAMBER_COUNT }, (_, i) => {
             const angle = (i * 360) / CHAMBER_COUNT - 90;
@@ -59,9 +59,9 @@ export default function BulletChamber({ firing, died, currentChamber }: BulletCh
                     ? showResult
                       ? died
                         ? 'bg-red-600 border-red-400 text-white shadow-lg shadow-red-500/50'
-                        : 'bg-green-600 border-green-400 text-white shadow-lg shadow-green-500/50'
-                      : 'bg-yellow-500 border-yellow-300 text-black animate-pulse'
-                    : 'bg-gray-700 border-gray-500 text-gray-400'
+                        : 'bg-emerald-600 border-emerald-400 text-white shadow-lg shadow-emerald-500/50'
+                      : 'bg-amber-500 border-amber-300 text-black animate-pulse'
+                    : 'bg-stone-700 border-stone-500/60 text-stone-400'
                 }`}
                 style={{ left: `${x}px`, top: `${y}px` }}
               >
@@ -74,12 +74,12 @@ export default function BulletChamber({ firing, died, currentChamber }: BulletCh
           <div className="absolute inset-0 flex items-center justify-center">
             <div className={`w-12 h-12 rounded-full border-2 flex items-center justify-center text-xl ${
               animating
-                ? 'bg-yellow-600 border-yellow-400 animate-spin'
+                ? 'bg-amber-600 border-amber-400 animate-spin'
                 : showResult
                   ? died
-                    ? 'bg-red-700 border-red-500'
-                    : 'bg-green-700 border-green-500'
-                  : 'bg-gray-700 border-gray-500'
+                    ? 'bg-red-800 border-red-500'
+                    : 'bg-emerald-800 border-emerald-500'
+                  : 'bg-stone-700 border-stone-500/60'
             }`}>
               {animating ? '🔫' : showResult ? (died ? '💀' : '😅') : '🎯'}
             </div>
@@ -89,12 +89,12 @@ export default function BulletChamber({ firing, died, currentChamber }: BulletCh
 
       {/* Status text */}
       {animating && (
-        <p className="text-yellow-400 font-bold text-lg animate-pulse">
+        <p className="text-amber-400 font-bold text-lg animate-pulse">
           🔫 Pulling the trigger...
         </p>
       )}
       {showResult && (
-        <p className={`font-bold text-xl ${died ? 'text-red-500' : 'text-green-500'}`}>
+        <p className={`font-bold text-xl ${died ? 'text-red-500' : 'text-emerald-400'}`}>
           {died ? '💥 BANG! Eliminated!' : '*click* ... Survived!'}
         </p>
       )}

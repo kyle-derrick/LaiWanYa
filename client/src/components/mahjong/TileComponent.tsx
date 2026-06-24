@@ -44,14 +44,18 @@ export default function TileComponent({
     return (
       <div
         className={`
-          inline-flex items-center justify-center rounded-md border-2 border-emerald-800
-          bg-gradient-to-br from-emerald-600 to-emerald-800
+          inline-flex items-center justify-center rounded-lg
           ${small ? 'w-8 h-10 text-xs' : 'w-12 h-16 text-sm'}
           ${className}
         `}
+        style={{
+          background: 'linear-gradient(145deg, #2d5a3a, #1a3d25)',
+          border: '2px solid #3d7a4a',
+          boxShadow: '0 3px 6px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.1), inset 0 -1px 2px rgba(0,0,0,0.2)'
+        }}
       >
-        <div className="w-3/4 h-3/4 border border-emerald-400/40 rounded-sm flex items-center justify-center">
-          <span className="text-emerald-300/60 font-bold">麻</span>
+        <div className="w-3/4 h-3/4 border border-emerald-500/30 rounded-sm flex items-center justify-center">
+          <span className="text-emerald-400/50 font-bold">麻</span>
         </div>
       </div>
     );
@@ -65,21 +69,35 @@ export default function TileComponent({
     <div
       onClick={disabled ? undefined : onClick}
       className={`
-        inline-flex flex-col items-center justify-center rounded-md
-        border-2 transition-all duration-150 select-none
+        inline-flex flex-col items-center justify-center rounded-lg
+        transition-all duration-150 select-none relative
         ${small ? 'w-8 h-10 text-xs' : 'w-12 h-16 text-sm'}
-        ${selected
-          ? 'border-yellow-400 bg-yellow-50 -translate-y-2 shadow-lg shadow-yellow-200'
-          : 'border-gray-300 bg-white hover:border-blue-400 hover:shadow-md'
-        }
         ${disabled ? 'opacity-50 cursor-not-allowed' : onClick ? 'cursor-pointer' : 'cursor-default'}
         ${className}
       `}
+      style={{
+        background: selected
+          ? 'linear-gradient(145deg, #fef3c7, #fde68a)'
+          : 'linear-gradient(145deg, #faf5ee, #f0e6d3)',
+        border: selected ? '2px solid #f59e0b' : '2px solid #d4c5a9',
+        boxShadow: selected
+          ? '0 8px 16px rgba(245,158,11,0.4), inset 0 2px 4px rgba(255,255,255,0.5), 0 0 12px rgba(245,158,11,0.3)'
+          : '0 4px 8px rgba(0,0,0,0.3), inset 0 2px 4px rgba(255,255,255,0.6), inset 0 -2px 4px rgba(0,0,0,0.1)',
+        transform: selected ? 'translateY(-8px) scale(1.05)' : 'translateY(0) scale(1)',
+      }}
     >
+      {/* 3D highlight */}
+      <div className="absolute inset-0 rounded-lg overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-1/3 bg-gradient-to-b from-white/20 to-transparent rounded-t-lg" />
+      </div>
+
       {/* Top: number or character */}
       <span
-        className={`font-bold leading-none ${small ? 'text-base' : 'text-xl'}`}
-        style={{ color: display.color }}
+        className={`font-bold leading-none relative z-10 ${small ? 'text-base' : 'text-xl'}`}
+        style={{
+          color: display.color,
+          textShadow: '0 1px 2px rgba(0,0,0,0.2)'
+        }}
       >
         {isDragonBai ? '□' : display.top}
       </span>
@@ -87,8 +105,11 @@ export default function TileComponent({
       {/* Bottom: suit label (for numbered suits) */}
       {display.bottom && (
         <span
-          className={`font-medium leading-none ${small ? 'text-xs' : 'text-xs'}`}
-          style={{ color: display.color }}
+          className={`font-medium leading-none relative z-10 ${small ? 'text-xs' : 'text-xs'}`}
+          style={{
+            color: display.color,
+            textShadow: '0 1px 2px rgba(0,0,0,0.2)'
+          }}
         >
           {display.bottom}
         </span>
@@ -96,7 +117,14 @@ export default function TileComponent({
 
       {/* Dragon zhong has a special red dot */}
       {isDragonZhong && (
-        <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-red-500 rounded-full" />
+        <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-red-500 rounded-full shadow-sm" />
+      )}
+
+      {/* Selection glow */}
+      {selected && (
+        <div className="absolute inset-0 rounded-lg animate-pulse" style={{
+          boxShadow: '0 0 20px rgba(245,158,11,0.5)'
+        }} />
       )}
     </div>
   );

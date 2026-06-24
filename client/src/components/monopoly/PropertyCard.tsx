@@ -26,7 +26,7 @@ const colorMap: Record<PropertyColor, string> = {
   [PropertyColor.YELLOW]: '#FFD700',
   [PropertyColor.GREEN]: '#008000',
   [PropertyColor.DARK_BLUE]: '#00008B',
-  [PropertyColor.RAILROAD]: '#000000',
+  [PropertyColor.RAILROAD]: '#555555',
   [PropertyColor.UTILITY]: '#808080'
 };
 
@@ -45,41 +45,49 @@ export default function PropertyCard({
   canMortgage,
   canUnmortgage
 }: PropertyCardProps) {
-  const bgColor = color ? colorMap[color] : '#f3f4f6';
+  const bgColor = color ? colorMap[color] : '#2d2d2d';
   const houses = ownership?.houses || 0;
   const isMortgaged = ownership?.isMortgaged || false;
 
   return (
     <div
-      className={`relative p-3 rounded-lg border-2 ${
-        isMortgaged ? 'border-red-400 opacity-70' : 'border-gray-200'
-      } ${isOwnedByMe ? 'ring-2 ring-blue-400' : ''}`}
-      style={{ backgroundColor: isMortgaged ? '#fef2f2' : '#ffffff' }}
+      className={`relative p-4 rounded-2xl border transition-all duration-300 backdrop-blur-xl ${
+        isMortgaged ? 'border-red-500/30 opacity-80' : 'border-white/[0.08]'
+      } ${isOwnedByMe ? 'ring-2 ring-amber-400/60' : ''}`}
+      style={{
+        background: isMortgaged
+          ? 'linear-gradient(145deg, rgba(239,68,68,0.06), rgba(239,68,68,0.02))'
+          : 'linear-gradient(145deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.06)'
+      }}
     >
       {/* Color bar */}
       {color && (
         <div
-          className="h-2 rounded-t-md -mt-3 -mx-3 mb-2"
-          style={{ backgroundColor: bgColor }}
+          className="h-3 rounded-t-lg -mt-4 -mx-4 mb-3"
+          style={{
+            backgroundColor: bgColor,
+            boxShadow: `0 2px 8px ${bgColor}40`
+          }}
         />
       )}
 
       {/* Property name */}
-      <h4 className="font-semibold text-sm mb-1">{name}</h4>
+      <h4 className="font-bold text-sm mb-2 text-amber-100">{name}</h4>
 
       {/* Price */}
       {price && (
-        <p className="text-xs text-gray-500 mb-1">${price}</p>
+        <p className="text-xs text-amber-400/80 mb-2 font-medium">${price}</p>
       )}
 
       {/* Houses indicator */}
       {ownership && houses > 0 && (
-        <div className="flex gap-1 mb-1">
+        <div className="flex gap-1 mb-2">
           {houses === 5 ? (
-            <span className="text-xs bg-red-500 text-white px-1 rounded">HOTEL</span>
+            <span className="text-xs bg-red-600 text-white px-2 py-0.5 rounded-md font-bold shadow-sm">🏨 HOTEL</span>
           ) : (
             Array.from({ length: houses }).map((_, i) => (
-              <span key={i} className="text-xs bg-green-500 text-white px-1 rounded">🏠</span>
+              <span key={i} className="text-xs bg-emerald-600 text-white px-1.5 py-0.5 rounded-md shadow-sm">🏠</span>
             ))
           )}
         </div>
@@ -87,16 +95,25 @@ export default function PropertyCard({
 
       {/* Mortgage indicator */}
       {isMortgaged && (
-        <p className="text-xs text-red-500 font-medium">MORTGAGED</p>
+        <p className="text-xs text-red-400 font-bold mb-2 flex items-center gap-1">
+          <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+          MORTGAGED
+        </p>
       )}
 
       {/* Action buttons for owned properties */}
       {isOwnedByMe && ownership && (
-        <div className="flex flex-wrap gap-1 mt-2">
+        <div className="flex flex-wrap gap-1.5 mt-3">
           {canBuild && onBuildHouse && (
             <button
               onClick={onBuildHouse}
-              className="px-2 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600"
+              className="px-3 py-1.5 text-xs rounded-lg font-medium transition-all duration-200 hover:brightness-110 hover:scale-105 active:scale-95"
+              style={{
+                background: 'linear-gradient(145deg, #22c55e, #16a34a)',
+                boxShadow: '0 2px 10px rgba(34,197,94,0.25), inset 0 1px 1px rgba(255,255,255,0.15)',
+                border: '1px solid rgba(34,197,94,0.3)',
+                color: 'white'
+              }}
             >
               Build
             </button>
@@ -104,7 +121,13 @@ export default function PropertyCard({
           {canSell && onSellHouse && (
             <button
               onClick={onSellHouse}
-              className="px-2 py-1 text-xs bg-yellow-500 text-white rounded hover:bg-yellow-600"
+              className="px-3 py-1.5 text-xs rounded-lg font-medium transition-all duration-200 hover:brightness-110 hover:scale-105 active:scale-95"
+              style={{
+                background: 'linear-gradient(145deg, #eab308, #ca8a04)',
+                boxShadow: '0 2px 10px rgba(234,179,8,0.25), inset 0 1px 1px rgba(255,255,255,0.15)',
+                border: '1px solid rgba(234,179,8,0.3)',
+                color: 'white'
+              }}
             >
               Sell
             </button>
@@ -112,7 +135,13 @@ export default function PropertyCard({
           {canMortgage && onMortgage && (
             <button
               onClick={onMortgage}
-              className="px-2 py-1 text-xs bg-orange-500 text-white rounded hover:bg-orange-600"
+              className="px-3 py-1.5 text-xs rounded-lg font-medium transition-all duration-200 hover:brightness-110 hover:scale-105 active:scale-95"
+              style={{
+                background: 'linear-gradient(145deg, #f97316, #ea580c)',
+                boxShadow: '0 2px 10px rgba(249,115,22,0.25), inset 0 1px 1px rgba(255,255,255,0.15)',
+                border: '1px solid rgba(249,115,22,0.3)',
+                color: 'white'
+              }}
             >
               Mortgage
             </button>
@@ -120,7 +149,13 @@ export default function PropertyCard({
           {canUnmortgage && onUnmortgage && (
             <button
               onClick={onUnmortgage}
-              className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+              className="px-3 py-1.5 text-xs rounded-lg font-medium transition-all duration-200 hover:brightness-110 hover:scale-105 active:scale-95"
+              style={{
+                background: 'linear-gradient(145deg, #3b82f6, #2563eb)',
+                boxShadow: '0 2px 10px rgba(59,130,246,0.25), inset 0 1px 1px rgba(255,255,255,0.15)',
+                border: '1px solid rgba(59,130,246,0.3)',
+                color: 'white'
+              }}
             >
               Unmortgage
             </button>

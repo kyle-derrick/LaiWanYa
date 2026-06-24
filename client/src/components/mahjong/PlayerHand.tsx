@@ -43,7 +43,7 @@ export default function PlayerHand({
         />
       ))}
       {sortedTiles.length === 0 && (
-        <div className={`text-gray-400 ${small ? 'text-xs' : 'text-sm'}`}>
+        <div className={`text-emerald-500/60 ${small ? 'text-xs' : 'text-sm'} italic`}>
           {faceDown ? '' : '无手牌'}
         </div>
       )}

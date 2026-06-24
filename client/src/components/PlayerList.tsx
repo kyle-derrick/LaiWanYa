@@ -1,4 +1,5 @@
 import { Player } from '../types';
+import { useTranslation } from 'react-i18next';
 
 interface PlayerListProps {
   players: Player[];
@@ -7,54 +8,95 @@ interface PlayerListProps {
   onKick?: (playerId: string) => void;
 }
 
+const avatarColors = [
+  'from-purple-500 to-pink-500',
+  'from-cyan-500 to-blue-500',
+  'from-green-500 to-emerald-500',
+  'from-orange-500 to-red-500',
+  'from-violet-500 to-purple-500',
+  'from-amber-500 to-yellow-500',
+];
+
 export default function PlayerList({ players, currentPlayerId, isHost = false, onKick }: PlayerListProps) {
+  const { t } = useTranslation();
+
   return (
-    <div className="space-y-2">
-      <h3 className="text-lg font-semibold text-gray-700">Players</h3>
-      {players.map((player) => (
-        <div
-          key={player.id}
-          className={`flex items-center justify-between p-3 rounded-md ${
-            player.id === currentPlayerId
-              ? 'bg-blue-50 border border-blue-200'
-              : 'bg-gray-50'
-          }`}
-        >
-          <div className="flex items-center gap-3">
+    <div className="space-y-3">
+      <h3 className="text-lg font-bold text-white flex items-center gap-2">
+        <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+        {t('players')} ({players.length})
+      </h3>
+      <div className="grid gap-3">
+        {players.map((player, index) => {
+          const isMe = player.id === currentPlayerId;
+          const colorClass = avatarColors[index % avatarColors.length];
+
+          return (
             <div
-              className={`w-3 h-3 rounded-full ${
-                player.isReady ? 'bg-green-500' : 'bg-gray-400'
-              }`}
-            />
-            <span className="font-medium">
-              {player.nickname}
-              {player.id === currentPlayerId && ' (You)'}
-            </span>
-            {player.isHost && (
-              <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded-full">
-                Host
-              </span>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <span
-              className={`text-sm ${
-                player.isReady ? 'text-green-600' : 'text-gray-500'
-              }`}
+              key={player.id}
+              className={`relative flex items-center justify-between p-4 rounded-xl transition-all duration-200
+                ${isMe
+                  ? 'bg-white/10 border border-cyan-400/40 shadow-lg shadow-cyan-500/10'
+                  : 'bg-white/5 border border-white/10 hover:bg-white/8'
+                }
+              `}
             >
-              {player.isReady ? 'Ready' : 'Not Ready'}
-            </span>
-            {isHost && player.id !== currentPlayerId && onKick && (
-              <button
-                onClick={() => onKick(player.id)}
-                className="px-2 py-1 text-xs bg-red-100 text-red-600 rounded hover:bg-red-200"
-              >
-                Kick
-              </button>
-            )}
-          </div>
-        </div>
-      ))}
+              <div className="flex items-center gap-3">
+                {/* Avatar */}
+                <div className={`relative w-10 h-10 rounded-full bg-gradient-to-br ${colorClass} flex items-center justify-center text-white font-bold text-sm shadow-lg`}>
+                  {player.nickname.charAt(0).toUpperCase()}
+                  {/* Online indicator */}
+                  <div className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-gray-900
+                    ${player.isReady ? 'bg-green-400' : 'bg-gray-500'}
+                  `} />
+                </div>
+
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-white">
+                      {player.nickname}
+                      {isMe && (
+                        <span className="ml-1.5 text-xs text-cyan-400 font-normal">({t('you')})</span>
+                      )}
+                    </span>
+                    {player.isHost && (
+                      <span className="px-2 py-0.5 bg-amber-500/20 text-amber-400 text-xs rounded-full font-medium border border-amber-500/30">
+                        👑 {t('host')}
+                      </span>
+                    )}
+                  </div>
+                  <span className={`text-xs ${player.isReady ? 'text-green-400' : 'text-gray-500'}`}>
+                    {player.isReady ? `✓ ${t('ready')}` : `○ ${t('notReady')}`}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {/* Ready status badge */}
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm
+                  ${player.isReady
+                    ? 'bg-green-500/20 text-green-400'
+                    : 'bg-gray-700/50 text-gray-500'
+                  }
+                `}>
+                  {player.isReady ? '✓' : '…'}
+                </div>
+
+                {/* Kick button */}
+                {isHost && player.id !== currentPlayerId && onKick && (
+                  <button
+                    onClick={() => onKick(player.id)}
+                    className="w-8 h-8 rounded-full bg-red-500/20 text-red-400 hover:bg-red-500/40 hover:text-red-300 transition-all flex items-center justify-center text-sm"
+                    title="Kick"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

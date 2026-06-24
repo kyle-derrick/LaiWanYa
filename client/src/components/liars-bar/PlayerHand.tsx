@@ -8,24 +8,24 @@ interface PlayerHandProps {
   targetRank: LiarsBarRank;
 }
 
-const RANK_SYMBOLS: Record<LiarsBarRank, { symbol: string; color: string; bg: string }> = {
-  [LiarsBarRank.ACE]: { symbol: '🅰️', color: 'text-red-400', bg: 'bg-red-900/30' },
-  [LiarsBarRank.KING]: { symbol: '♚', color: 'text-yellow-400', bg: 'bg-yellow-900/30' },
-  [LiarsBarRank.QUEEN]: { symbol: '♛', color: 'text-purple-400', bg: 'bg-purple-900/30' },
-  [LiarsBarRank.JACK]: { symbol: '♝', color: 'text-blue-400', bg: 'bg-blue-900/30' },
+const RANK_SYMBOLS: Record<LiarsBarRank, { symbol: string; color: string; bg: string; border: string }> = {
+  [LiarsBarRank.ACE]: { symbol: '🅰️', color: 'text-red-400', bg: 'bg-red-950/40', border: 'border-red-800/50' },
+  [LiarsBarRank.KING]: { symbol: '♚', color: 'text-amber-400', bg: 'bg-amber-950/40', border: 'border-amber-800/50' },
+  [LiarsBarRank.QUEEN]: { symbol: '♛', color: 'text-purple-400', bg: 'bg-purple-950/40', border: 'border-purple-800/50' },
+  [LiarsBarRank.JACK]: { symbol: '♝', color: 'text-blue-400', bg: 'bg-blue-950/40', border: 'border-blue-800/50' },
 };
 
 export default function PlayerHand({ hand, selectedIndices, onToggleCard, disabled, targetRank }: PlayerHandProps) {
   if (!hand || hand.length === 0) {
     return (
-      <div className="text-center text-gray-400 py-4">
+      <div className="text-center text-stone-400 py-4">
         No cards in hand
       </div>
     );
   }
 
   return (
-    <div className="flex flex-wrap gap-2 justify-center">
+    <div className="flex flex-wrap gap-2.5 justify-center">
       {hand.map((card, index) => {
         const isSelected = selectedIndices.includes(index);
         const isTarget = card.rank === targetRank;
@@ -37,20 +37,20 @@ export default function PlayerHand({ hand, selectedIndices, onToggleCard, disabl
             onClick={() => !disabled && onToggleCard(index)}
             disabled={disabled}
             className={`
-              relative w-16 h-24 rounded-lg border-2 flex flex-col items-center justify-center
-              transition-all duration-200 font-bold
-              ${disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:scale-105'}
+              relative w-16 h-24 rounded-xl border-2 flex flex-col items-center justify-center
+              transition-all duration-200 font-bold backdrop-blur-sm
+              ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:scale-110 hover:-translate-y-1 active:scale-100'}
               ${isSelected
-                ? 'border-yellow-400 bg-yellow-900/50 shadow-lg shadow-yellow-500/30 -translate-y-2'
+                ? 'border-amber-400/80 bg-amber-900/50 shadow-xl shadow-amber-500/30 -translate-y-3 scale-105'
                 : isTarget
-                  ? 'border-green-500 bg-green-900/30'
-                  : 'border-gray-500 ' + rankInfo.bg
+                  ? 'border-emerald-500/70 bg-emerald-950/40 shadow-lg shadow-emerald-500/15'
+                  : `${rankInfo.border} ${rankInfo.bg} shadow-md shadow-black/20`
               }
             `}
           >
             {/* Selection indicator */}
             {isSelected && (
-              <div className="absolute -top-2 -right-2 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center text-xs text-black font-bold">
+              <div className="absolute -top-2 -right-2 w-5 h-5 bg-amber-400 rounded-full flex items-center justify-center text-xs text-black font-bold shadow-md">
                 ✓
               </div>
             )}

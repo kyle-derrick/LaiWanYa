@@ -9,6 +9,13 @@ import BankPanel from './BankPanel';
 import PropertyCard from './PropertyCard';
 import { BOARD_SQUARES, PLAYER_COLORS } from './types';
 
+const darkPanelStyle = {
+  background: 'linear-gradient(145deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))',
+  backdropFilter: 'blur(20px)',
+  boxShadow: '0 8px 32px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.06)',
+  border: '1px solid rgba(255,255,255,0.08)'
+};
+
 export default function MonopolyGame() {
   const { roomId } = useParams<{ roomId: string }>();
   const navigate = useNavigate();
@@ -39,10 +46,8 @@ export default function MonopolyGame() {
     socket.on('gameFinished', onGameFinished);
     socket.on('error', onError);
 
-    // Request game state on mount
     socket.emit('getGameState', { roomId });
 
-    // Poll game state as fallback
     const pollInterval = setInterval(() => {
       socket.emit('getGameState', { roomId });
     }, 3000);
@@ -127,8 +132,13 @@ export default function MonopolyGame() {
 
   if (!gameState) {
     return (
-      <div className="max-w-4xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
-        <p className="text-center text-gray-500">Loading Monopoly game...</p>
+      <div className="min-h-screen flex items-center justify-center" style={{
+        background: 'linear-gradient(135deg, #0f0f14 0%, #1a1024 50%, #0f0f14 100%)'
+      }}>
+        <div className="text-center p-8 rounded-xl" style={darkPanelStyle}>
+          <div className="text-5xl mb-4">🏠</div>
+          <p className="text-amber-300 text-lg">Loading Monopoly game...</p>
+        </div>
       </div>
     );
   }
@@ -139,7 +149,17 @@ export default function MonopolyGame() {
   const currentPlayer = gameState.players.find(p => p.id === gameState.currentPlayerId);
   const me = gameState.players.find(p => p.id === socket?.id);
 
-  // Render pending action panel
+  const buttonStyle = (color: string, disabled = false) => ({
+    background: disabled
+      ? 'linear-gradient(145deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02))'
+      : `linear-gradient(145deg, ${color}, ${color}dd)`,
+    boxShadow: disabled ? 'none' : `0 4px 16px ${color}30, inset 0 1px 1px rgba(255,255,255,0.15)`,
+    color: disabled ? '#888' : 'white',
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    border: disabled ? '1px solid rgba(255,255,255,0.04)' : `1px solid ${color}40`,
+    transition: 'all 0.2s ease'
+  });
+
   const renderPendingAction = () => {
     if (!pendingAction || !isMyTurn) return null;
 
@@ -148,22 +168,28 @@ export default function MonopolyGame() {
         const data = pendingAction.data as { squareIndex: number; price: number };
         const square = BOARD_SQUARES[data.squareIndex];
         return (
-          <div className="bg-yellow-50 border border-yellow-300 rounded-lg p-4">
-            <h3 className="font-bold text-lg mb-2">Buy Property?</h3>
-            <p className="text-sm text-gray-700 mb-1">{square.name}</p>
-            <p className="text-lg font-semibold text-green-700 mb-3">${data.price}</p>
+          <div className="rounded-xl p-4" style={{
+            background: 'linear-gradient(145deg, rgba(234,179,8,0.08), rgba(234,179,8,0.03))',
+            border: '1px solid rgba(234,179,8,0.2)',
+            boxShadow: '0 4px 16px rgba(234,179,8,0.1), inset 0 1px 1px rgba(255,255,255,0.04)'
+          }}>
+            <h3 className="font-bold text-lg mb-2 text-amber-200">Buy Property?</h3>
+            <p className="text-sm text-amber-100 mb-1">{square.name}</p>
+            <p className="text-lg font-bold text-amber-400 mb-3">${data.price}</p>
             <div className="flex gap-3">
               <button
                 onClick={handleBuyProperty}
                 disabled={!availableActions.includes('buyProperty')}
-                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-medium"
+                className="flex-1 px-4 py-2.5 rounded-xl font-bold text-sm transition-all duration-200"
+                style={buttonStyle('#22c55e', !availableActions.includes('buyProperty'))}
               >
                 Buy
               </button>
               <button
                 onClick={handleDeclineProperty}
                 disabled={!availableActions.includes('declineProperty')}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-medium"
+                className="flex-1 px-4 py-2.5 rounded-xl font-bold text-sm transition-all duration-200"
+                style={buttonStyle('#ef4444', !availableActions.includes('declineProperty'))}
               >
                 Decline
               </button>
@@ -176,16 +202,21 @@ export default function MonopolyGame() {
         const data = pendingAction.data as { toPlayerId: string; amount: number; squareIndex: number };
         const landlord = gameState.players.find(p => p.id === data.toPlayerId);
         return (
-          <div className="bg-orange-50 border border-orange-300 rounded-lg p-4">
-            <h3 className="font-bold text-lg mb-2">Pay Rent</h3>
-            <p className="text-sm text-gray-700">
-              Pay <span className="font-bold text-orange-700">${data.amount}</span> to{' '}
+          <div className="rounded-xl p-4" style={{
+            background: 'linear-gradient(145deg, rgba(249,115,22,0.08), rgba(249,115,22,0.03))',
+            border: '1px solid rgba(249,115,22,0.2)',
+            boxShadow: '0 4px 16px rgba(249,115,22,0.1), inset 0 1px 1px rgba(255,255,255,0.04)'
+          }}>
+            <h3 className="font-bold text-lg mb-2 text-orange-200">Pay Rent</h3>
+            <p className="text-sm text-orange-100">
+              Pay <span className="font-bold text-orange-400">${data.amount}</span> to{' '}
               <span className="font-medium">{landlord?.nickname || 'Player'}</span>
             </p>
             <button
               onClick={handlePayRent}
               disabled={!availableActions.includes('payRent')}
-              className="mt-3 w-full px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-medium"
+              className="mt-3 w-full px-4 py-2.5 rounded-xl font-bold text-sm transition-all duration-200"
+              style={buttonStyle('#f97316', !availableActions.includes('payRent'))}
             >
               Pay ${data.amount}
             </button>
@@ -196,15 +227,20 @@ export default function MonopolyGame() {
       case 'PAY_TAX': {
         const data = pendingAction.data as { amount: number };
         return (
-          <div className="bg-red-50 border border-red-300 rounded-lg p-4">
-            <h3 className="font-bold text-lg mb-2">Pay Tax</h3>
-            <p className="text-sm text-gray-700">
-              Pay <span className="font-bold text-red-700">${data.amount}</span> tax
+          <div className="rounded-xl p-4" style={{
+            background: 'linear-gradient(145deg, rgba(239,68,68,0.08), rgba(239,68,68,0.03))',
+            border: '1px solid rgba(239,68,68,0.2)',
+            boxShadow: '0 4px 16px rgba(239,68,68,0.1), inset 0 1px 1px rgba(255,255,255,0.04)'
+          }}>
+            <h3 className="font-bold text-lg mb-2 text-red-200">Pay Tax</h3>
+            <p className="text-sm text-red-100">
+              Pay <span className="font-bold text-red-400">${data.amount}</span> tax
             </p>
             <button
               onClick={handlePayTax}
               disabled={!availableActions.includes('payTax')}
-              className="mt-3 w-full px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-medium"
+              className="mt-3 w-full px-4 py-2.5 rounded-xl font-bold text-sm transition-all duration-200"
+              style={buttonStyle('#ef4444', !availableActions.includes('payTax'))}
             >
               Pay Tax
             </button>
@@ -215,20 +251,25 @@ export default function MonopolyGame() {
       case 'DRAW_CARD': {
         const data = pendingAction.data as { cardType: string };
         return (
-          <div className="bg-blue-50 border border-blue-300 rounded-lg p-4">
-            <h3 className="font-bold text-lg mb-2">
+          <div className="rounded-xl p-4" style={{
+            background: 'linear-gradient(145deg, rgba(59,130,246,0.08), rgba(59,130,246,0.03))',
+            border: '1px solid rgba(59,130,246,0.2)',
+            boxShadow: '0 4px 16px rgba(59,130,246,0.1), inset 0 1px 1px rgba(255,255,255,0.04)'
+          }}>
+            <h3 className="font-bold text-lg mb-2 text-blue-200">
               {data.cardType === 'CHANCE' ? '❓ Chance' : '📦 Community Chest'}
             </h3>
             {gameState.currentCard ? (
-              <p className="text-sm text-gray-700 mb-3">{gameState.currentCard.description}</p>
+              <p className="text-sm text-blue-100 mb-3">{gameState.currentCard.description}</p>
             ) : (
-              <p className="text-sm text-gray-700 mb-3">Draw a card!</p>
+              <p className="text-sm text-blue-100 mb-3">Draw a card!</p>
             )}
             {!gameState.currentCard && (
               <button
                 onClick={handleDrawCard}
                 disabled={!availableActions.includes('drawCard')}
-                className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-medium"
+                className="w-full px-4 py-2.5 rounded-xl font-bold text-sm transition-all duration-200"
+                style={buttonStyle('#3b82f6', !availableActions.includes('drawCard'))}
               >
                 Draw Card
               </button>
@@ -239,28 +280,35 @@ export default function MonopolyGame() {
 
       case 'JAIL_CHOICE': {
         return (
-          <div className="bg-purple-50 border border-purple-300 rounded-lg p-4">
-            <h3 className="font-bold text-lg mb-2">🔒 In Jail</h3>
-            <p className="text-sm text-gray-700 mb-3">Choose how to get out of jail:</p>
+          <div className="rounded-xl p-4" style={{
+            background: 'linear-gradient(145deg, rgba(168,85,247,0.08), rgba(168,85,247,0.03))',
+            border: '1px solid rgba(168,85,247,0.2)',
+            boxShadow: '0 4px 16px rgba(168,85,247,0.1), inset 0 1px 1px rgba(255,255,255,0.04)'
+          }}>
+            <h3 className="font-bold text-lg mb-2 text-purple-200">🔒 In Jail</h3>
+            <p className="text-sm text-purple-100 mb-3">Choose how to get out of jail:</p>
             <div className="flex flex-col gap-2">
               <button
                 onClick={handlePayJailFine}
                 disabled={!availableActions.includes('payJailFine')}
-                className="w-full px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-medium"
+                className="w-full px-4 py-2.5 rounded-xl font-bold text-sm transition-all duration-200"
+                style={buttonStyle('#eab308', !availableActions.includes('payJailFine'))}
               >
                 💰 Pay $50 Fine
               </button>
               <button
                 onClick={handleRollForDoubles}
                 disabled={!availableActions.includes('rollForDoubles')}
-                className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-medium"
+                className="w-full px-4 py-2.5 rounded-xl font-bold text-sm transition-all duration-200"
+                style={buttonStyle('#3b82f6', !availableActions.includes('rollForDoubles'))}
               >
                 🎲 Roll for Doubles
               </button>
               {availableActions.includes('useJailCard') && (
                 <button
                   onClick={handleUseJailCard}
-                  className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 font-medium"
+                  className="w-full px-4 py-2.5 rounded-xl font-bold text-sm transition-all duration-200"
+                  style={buttonStyle('#22c55e')}
                 >
                   🎫 Use Get Out of Jail Card
                 </button>
@@ -276,15 +324,28 @@ export default function MonopolyGame() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto mt-4 p-4">
+    <div className="min-h-screen p-4 relative overflow-hidden" style={{
+      background: 'linear-gradient(135deg, #0f0f14 0%, #1a1024 50%, #0f0f14 100%)'
+    }}>
       {/* Header */}
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold text-green-700">🏠 Monopoly</h1>
+        <h1 className="text-2xl font-bold text-amber-300 flex items-center gap-2 drop-shadow-lg">
+          🏠 Monopoly
+        </h1>
         <div className="flex items-center gap-4">
-          <span className="text-sm text-gray-500">Room: {roomId}</span>
+          <span className="text-sm text-amber-300/60 px-3 py-1 rounded-lg backdrop-blur-sm" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+            Room: {roomId}
+          </span>
           <button
             onClick={handleLeaveGame}
-            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm"
+            className="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:brightness-110 active:scale-95"
+            style={{
+              background: 'linear-gradient(145deg, rgba(239,68,68,0.8), rgba(220,38,38,0.7))',
+              boxShadow: '0 4px 16px rgba(239,68,68,0.25), inset 0 1px 1px rgba(255,255,255,0.1)',
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(239,68,68,0.3)',
+              color: 'white'
+            }}
           >
             Leave
           </button>
@@ -293,7 +354,11 @@ export default function MonopolyGame() {
 
       {/* Last action bar */}
       {gameState.lastAction && (
-        <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded-md text-sm text-blue-800 text-center">
+        <div className="mb-3 p-3 rounded-xl text-sm text-amber-200/90 text-center backdrop-blur-md" style={{
+          background: 'linear-gradient(145deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01))',
+          border: '1px solid rgba(255,255,255,0.06)',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.2)'
+        }}>
           {gameState.lastAction}
         </div>
       )}
@@ -306,17 +371,31 @@ export default function MonopolyGame() {
           <div className="flex gap-2 mb-3 lg:hidden">
             <button
               onClick={() => setActiveTab('board')}
-              className={`flex-1 py-2 text-sm font-medium rounded-md ${
-                activeTab === 'board' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700'
+              className={`flex-1 py-2 text-sm font-bold rounded-xl transition-all duration-200 ${
+                activeTab === 'board' ? 'text-amber-100' : 'text-amber-500/70'
               }`}
+              style={{
+                background: activeTab === 'board'
+                  ? 'linear-gradient(145deg, #c8a415, #a08010)'
+                  : 'linear-gradient(145deg, #2a2318, #1a1510)',
+                boxShadow: activeTab === 'board' ? '0 4px 12px rgba(200,164,21,0.3)' : 'none',
+                border: '1px solid rgba(139,90,43,0.3)'
+              }}
             >
               Board
             </button>
             <button
               onClick={() => setActiveTab('properties')}
-              className={`flex-1 py-2 text-sm font-medium rounded-md ${
-                activeTab === 'properties' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700'
+              className={`flex-1 py-2 text-sm font-bold rounded-xl transition-all duration-200 ${
+                activeTab === 'properties' ? 'text-amber-100' : 'text-amber-500/70'
               }`}
+              style={{
+                background: activeTab === 'properties'
+                  ? 'linear-gradient(145deg, #c8a415, #a08010)'
+                  : 'linear-gradient(145deg, #2a2318, #1a1510)',
+                boxShadow: activeTab === 'properties' ? '0 4px 12px rgba(200,164,21,0.3)' : 'none',
+                border: '1px solid rgba(139,90,43,0.3)'
+              }}
             >
               Properties & Actions
             </button>
@@ -365,9 +444,19 @@ export default function MonopolyGame() {
         {/* Right: Sidebar */}
         <div className={`w-full lg:w-80 flex flex-col gap-3 ${activeTab === 'properties' ? '' : 'hidden lg:flex'}`}>
           {/* Dice + Actions */}
-          <div className="bg-white rounded-lg shadow-md p-4">
-            <h3 className="font-semibold text-lg mb-3">
-              {isMyTurn ? '🟢 Your Turn' : `⏳ ${currentPlayer?.nickname || 'Waiting'}...`}
+          <div className="rounded-xl p-4" style={darkPanelStyle}>
+            <h3 className="font-bold text-lg mb-3 text-amber-200">
+              {isMyTurn ? (
+                <span className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 bg-green-400 rounded-full animate-pulse" />
+                  Your Turn
+                </span>
+              ) : (
+                <span className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 bg-amber-500/50 rounded-full" />
+                  {currentPlayer?.nickname || 'Waiting'}...
+                </span>
+              )}
             </h3>
 
             {/* Dice */}
@@ -387,7 +476,8 @@ export default function MonopolyGame() {
             {isMyTurn && availableActions.includes('endTurn') && !pendingAction && (
               <button
                 onClick={handleEndTurn}
-                className="mt-3 w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 font-medium"
+                className="mt-3 w-full px-4 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 hover:brightness-110 hover:scale-[1.02] active:scale-[0.98]"
+                style={buttonStyle('#6366f1')}
               >
                 End Turn ➡️
               </button>
@@ -395,8 +485,8 @@ export default function MonopolyGame() {
           </div>
 
           {/* Players */}
-          <div className="bg-white rounded-lg shadow-md p-4">
-            <h3 className="font-semibold text-lg mb-3">Players</h3>
+          <div className="rounded-xl p-4" style={darkPanelStyle}>
+            <h3 className="font-bold text-lg mb-3 text-amber-200">Players</h3>
             <div className="space-y-2">
               {gameState.players.map((player, idx) => (
                 <PlayerToken
@@ -430,9 +520,13 @@ export default function MonopolyGame() {
 
           {/* Free Parking Pot */}
           {gameState.freeParkingPot > 0 && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
-              <span className="text-sm text-green-700">
-                🅿️ Free Parking Pot: <span className="font-bold">${gameState.freeParkingPot}</span>
+            <div className="rounded-xl p-3 text-center backdrop-blur-md" style={{
+              background: 'linear-gradient(145deg, rgba(34,197,94,0.08), rgba(34,197,94,0.03))',
+              border: '1px solid rgba(34,197,94,0.15)',
+              boxShadow: '0 4px 16px rgba(34,197,94,0.1), inset 0 1px 1px rgba(255,255,255,0.04)'
+            }}>
+              <span className="text-sm text-emerald-300">
+                🅿️ Free Parking Pot: <span className="font-bold text-emerald-200">${gameState.freeParkingPot}</span>
               </span>
             </div>
           )}

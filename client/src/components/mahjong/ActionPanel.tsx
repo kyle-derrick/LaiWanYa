@@ -27,19 +27,31 @@ export default function ActionPanel({
   const canHu = availableActions.includes('hu');
   const canPass = availableActions.includes('pass');
 
-  // If no actions and can't discard, nothing to show
   if (!hasActions && !canDiscard) return null;
 
+  const actionButtonStyle = (color: string) => ({
+    background: `linear-gradient(145deg, ${color}, ${color}dd)`,
+    boxShadow: `0 4px 12px ${color}40`,
+    color: 'white'
+  });
+
   return (
-    <div className="bg-white/95 backdrop-blur rounded-xl shadow-lg p-4 border border-gray-200">
+    <div
+      className="rounded-xl shadow-lg p-4 backdrop-blur-sm"
+      style={{
+        background: 'linear-gradient(145deg, rgba(30,60,40,0.95), rgba(15,40,25,0.95))',
+        border: '1px solid rgba(45,106,58,0.4)',
+        boxShadow: '0 8px 24px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.05)'
+      }}
+    >
       {/* Pending action section (responding to someone's discard) */}
       {pendingAction && hasActions && (
         <div className="mb-3">
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-sm font-medium text-gray-700">可执行操作：</span>
+            <span className="text-sm font-medium text-emerald-200">可执行操作：</span>
             {lastDiscard && (
               <div className="flex items-center gap-1">
-                <span className="text-xs text-gray-500">弃牌:</span>
+                <span className="text-xs text-emerald-400/80">弃牌:</span>
                 <TileComponent tile={lastDiscard} small />
               </div>
             )}
@@ -49,7 +61,8 @@ export default function ActionPanel({
             {canChi && (
               <button
                 onClick={() => onAction('chi')}
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-medium text-sm transition-colors shadow-sm"
+                className="px-4 py-2 rounded-xl font-medium text-sm transition-all duration-200 hover:scale-105"
+                style={actionButtonStyle('#3b82f6')}
               >
                 🀄 吃
               </button>
@@ -57,7 +70,8 @@ export default function ActionPanel({
             {canPong && (
               <button
                 onClick={() => onAction('pong')}
-                className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 font-medium text-sm transition-colors shadow-sm"
+                className="px-4 py-2 rounded-xl font-medium text-sm transition-all duration-200 hover:scale-105"
+                style={actionButtonStyle('#22c55e')}
               >
                 🀄 碰
               </button>
@@ -65,7 +79,8 @@ export default function ActionPanel({
             {canKong && (
               <button
                 onClick={() => onAction('kong')}
-                className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 font-medium text-sm transition-colors shadow-sm"
+                className="px-4 py-2 rounded-xl font-medium text-sm transition-all duration-200 hover:scale-105"
+                style={actionButtonStyle('#a855f7')}
               >
                 🀄 杠
               </button>
@@ -73,7 +88,11 @@ export default function ActionPanel({
             {canHu && (
               <button
                 onClick={() => onAction('hu')}
-                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 font-bold text-sm transition-colors shadow-sm animate-pulse"
+                className="px-4 py-2 rounded-xl font-bold text-sm transition-all duration-200 hover:scale-105 animate-pulse"
+                style={{
+                  ...actionButtonStyle('#ef4444'),
+                  boxShadow: '0 4px 12px rgba(239,68,68,0.5), 0 0 20px rgba(239,68,68,0.3)'
+                }}
               >
                 🏆 胡
               </button>
@@ -81,7 +100,12 @@ export default function ActionPanel({
             {canPass && (
               <button
                 onClick={() => onAction('pass')}
-                className="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500 font-medium text-sm transition-colors shadow-sm"
+                className="px-4 py-2 rounded-xl font-medium text-sm transition-all duration-200 hover:scale-105"
+                style={{
+                  background: 'linear-gradient(145deg, #6b7280, #4b5563)',
+                  boxShadow: '0 2px 8px rgba(107,114,128,0.3)',
+                  color: 'white'
+                }}
               >
                 过
               </button>
@@ -92,15 +116,23 @@ export default function ActionPanel({
 
       {/* Discard section */}
       {canDiscard && (
-        <div className={hasActions ? 'border-t border-gray-200 pt-3' : ''}>
+        <div className={hasActions ? 'border-t border-emerald-700/40 pt-3' : ''}>
           <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-gray-700">
+            <span className="text-sm font-medium text-emerald-200">
               {selectedTileId ? '点击按钮出牌 →' : '← 先选一张牌'}
             </span>
             <button
               onClick={onDiscard}
               disabled={!selectedTileId}
-              className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed font-bold text-sm transition-colors shadow-sm"
+              className="px-6 py-2 rounded-xl font-bold text-sm transition-all duration-200"
+              style={{
+                background: selectedTileId
+                  ? 'linear-gradient(145deg, #f97316, #ea580c)'
+                  : 'linear-gradient(145deg, #4a4a4a, #3a3a3a)',
+                boxShadow: selectedTileId ? '0 4px 12px rgba(249,115,22,0.4)' : 'none',
+                color: selectedTileId ? 'white' : '#888',
+                cursor: selectedTileId ? 'pointer' : 'not-allowed'
+              }}
             >
               出牌
             </button>
@@ -114,7 +146,8 @@ export default function ActionPanel({
           {availableActions.includes('kong_self') && (
             <button
               onClick={() => onAction('kong')}
-              className="px-3 py-1.5 bg-purple-400 text-white rounded-lg hover:bg-purple-500 text-xs font-medium transition-colors"
+              className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 hover:scale-105"
+              style={actionButtonStyle('#a855f7')}
             >
               杠
             </button>
@@ -122,7 +155,11 @@ export default function ActionPanel({
           {availableActions.includes('hu_self') && (
             <button
               onClick={() => onAction('hu')}
-              className="px-3 py-1.5 bg-red-400 text-white rounded-lg hover:bg-red-500 text-xs font-bold transition-colors animate-pulse"
+              className="px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 hover:scale-105 animate-pulse"
+              style={{
+                ...actionButtonStyle('#ef4444'),
+                boxShadow: '0 2px 8px rgba(239,68,68,0.4)'
+              }}
             >
               自摸胡
             </button>
