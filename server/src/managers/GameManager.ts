@@ -1,6 +1,7 @@
 import { GameState, GameStatus, GameResult, GameType } from '../types';
 import { UnoGame } from '../games/uno/UnoGame';
 import { MonopolyGame } from '../games/monopoly/MonopolyGame';
+import { MahjongGame } from '../games/mahjong/MahjongGame';
 
 export interface Game {
   getState(): GameState;
@@ -29,7 +30,8 @@ export class GameManager {
         game = new MonopolyGame(playerIds);
         break;
       case GameType.MAHJONG:
-        throw new Error('Mahjong not implemented yet');
+        game = new MahjongGame(playerIds);
+        break;
       default:
         throw new Error(`Unknown game type: ${gameType}`);
     }

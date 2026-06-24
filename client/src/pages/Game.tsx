@@ -4,6 +4,7 @@ import { UnoGameState, UnoColor, GameType } from '../types';
 import { socket } from '../hooks/useSocket';
 import UnoCardComponent from '../components/UnoCard';
 import MonopolyGame from '../components/monopoly/MonopolyGame';
+import { MahjongGame } from '../components/mahjong';
 
 export default function Game() {
   const { roomId } = useParams<{ roomId: string }>();
@@ -29,6 +30,10 @@ export default function Game() {
   // Route to the correct game component
   if (gameType === GameType.MONOPOLY) {
     return <MonopolyGame />;
+  }
+
+  if (gameType === GameType.MAHJONG) {
+    return <MahjongGame />;
   }
 
   // Default: UNO game (or loading)

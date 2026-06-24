@@ -203,6 +203,36 @@ export function setupSocketHandlers(
       broadcastGameState(io, roomManager, gameManager, room.id);
     });
 
+    // Mahjong game actions
+    socket.on('mahjong:action', (data: { action: string; data?: unknown }) => {
+      const room = roomManager.getPlayerRoom(socket.id);
+      if (!room) return;
+
+      const result = gameManager.handleGameAction(room.id, socket.id, data.action, data.data);
+      if (!result.success) {
+        socket.emit('error', { message: result.error });
+        return;
+      }
+
+      // Check if action required from other players (mahjong specific)
+      const game = gameManager.getGame(room.id);
+      if (game) {
+        try {
+          const pending = (game as any).getPendingActions?.();
+          if (pending && pending.length > 0) {
+            for (const p of pending) {
+              io.to(p.playerId).emit('actionRequired', p);
+            }
+          }
+        } catch (e) {
+          // Game doesn't support pending actions
+        }
+      }
+
+      // Broadcast updated state
+      broadcastGameState(io, roomManager, gameManager, room.id);
+    });
+
     // Disconnect
     socket.on('disconnect', () => {
       const room = roomManager.getPlayerRoom(socket.id);
