@@ -1,7 +1,8 @@
 export enum GameType {
   UNO = 'UNO',
   MONOPOLY = 'MONOPOLY',
-  MAHJONG = 'MAHJONG'
+  MAHJONG = 'MAHJONG',
+  LIARS_BAR = 'LIARS_BAR'
 }
 
 export enum RoomStatus {
@@ -19,11 +20,16 @@ export interface Player {
 
 export interface Room {
   id: string;
+  name: string;
+  description: string;
   gameType: GameType;
   status: RoomStatus;
   players: Player[];
   maxPlayers: number;
-  createdAt: string;
+  isPrivate: boolean;
+  password: string | null;
+  createdAt: number;
+  hostId: string;
 }
 
 export enum UnoColor {
@@ -158,4 +164,62 @@ export interface MonopolyGameState {
   playerPosition?: number;
   playerIsInJail?: boolean;
   availableActions?: string[];
+}
+
+// Liar's Bar types
+export enum LiarsBarRank {
+  ACE = 'A',
+  KING = 'K',
+  QUEEN = 'Q',
+  JACK = 'J'
+}
+
+export interface LiarsBarCard {
+  id: string;
+  rank: LiarsBarRank;
+}
+
+export enum LiarsBarPhase {
+  PLAYING_CARDS = 'PLAYING_CARDS',
+  CHALLENGING = 'CHALLENGING',
+  REVEALING = 'REVEALING',
+  ROUND_RESTART = 'ROUND_RESTART',
+  GAME_OVER = 'GAME_OVER'
+}
+
+export interface LiarsBarPlayerState {
+  id: string;
+  nickname: string;
+  alive: boolean;
+  handSize: number;
+  hp: number;
+  bulletPosition: number;
+  currentChamber: number;
+}
+
+export interface PlayedPile {
+  playerId: string;
+  cards: LiarsBarCard[];
+  claimedRank: LiarsBarRank;
+  cardCount: number;
+}
+
+export interface LiarsBarGameState {
+  status: 'WAITING' | 'PLAYING' | 'FINISHED';
+  currentPlayerId: string | null;
+  players: LiarsBarPlayerState[];
+  targetRank: LiarsBarRank;
+  currentPile: PlayedPile | null;
+  lastAction: string | null;
+  winnerId: string | null;
+  phase: LiarsBarPhase;
+  roundNumber: number;
+  playerHand?: LiarsBarCard[];
+  availableActions?: string[];
+  revealResult?: {
+    cards: LiarsBarCard[];
+    wasLying: boolean;
+    loserId: string;
+    died: boolean;
+  } | null;
 }

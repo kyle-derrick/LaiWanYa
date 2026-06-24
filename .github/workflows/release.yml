@@ -1,0 +1,52 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          cd server && npm ci
+          cd ../client && npm ci
+
+      - name: Build server
+        run: cd server && npm run build
+
+      - name: Build client
+        run: cd client && npm run build
+
+      - name: Create release archive
+        run: |
+          mkdir -p dist
+          cp -r server/dist dist/server
+          cp -r server/package.json dist/server/
+          cp -r server/node_modules dist/server/ 2>/dev/null || true
+          cp -r client/dist dist/client
+          cp package.json dist/
+          cp README.md dist/
+          cp LICENSE dist/
+          tar -czf laiwanya-linux-x64.tar.gz -C dist .
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: laiwanya-linux-x64.tar.gz
+          generate_release_notes: true
+          draft: false
+          prerelease: false

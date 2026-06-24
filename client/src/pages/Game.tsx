@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { UnoGameState, UnoColor, GameType } from '../types';
 import { socket } from '../hooks/useSocket';
 import UnoCardComponent from '../components/UnoCard';
 import MonopolyGame from '../components/monopoly/MonopolyGame';
 import { MahjongGame } from '../components/mahjong';
+import { LiarsBarGame } from '../components/liars-bar';
 
 export default function Game() {
   const { roomId } = useParams<{ roomId: string }>();
@@ -36,12 +38,17 @@ export default function Game() {
     return <MahjongGame />;
   }
 
+  if (gameType === GameType.LIARS_BAR) {
+    return <LiarsBarGame />;
+  }
+
   // Default: UNO game (or loading)
   return <UnoGameView roomId={roomId} navigate={navigate} />;
 }
 
 // UNO game component extracted for clarity
 function UnoGameView({ roomId, navigate }: { roomId: string | undefined; navigate: ReturnType<typeof useNavigate> }) {
+  const { t } = useTranslation();
   const [gameState, setGameState] = useState<UnoGameState | null>(null);
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [pendingCardIndex, setPendingCardIndex] = useState<number | null>(null);
@@ -126,7 +133,7 @@ function UnoGameView({ roomId, navigate }: { roomId: string | undefined; navigat
   if (!gameState) {
     return (
       <div className="max-w-4xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
-        <p className="text-center text-gray-500">Loading game...</p>
+        <p className="text-center text-gray-500">{t('loadingRoom')}</p>
       </div>
     );
   }
@@ -137,14 +144,14 @@ function UnoGameView({ roomId, navigate }: { roomId: string | undefined; navigat
   return (
     <div className="max-w-6xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-blue-600">UNO Game</h1>
+        <h1 className="text-2xl font-bold text-blue-600">{t('unoGame')}</h1>
         <div className="flex items-center gap-4">
-          <span className="text-sm text-gray-500">Room: {roomId}</span>
+          <span className="text-sm text-gray-500">{t('room')}: {roomId}</span>
           <button
             onClick={handleLeaveGame}
             className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
           >
-            Leave
+            {t('leave')}
           </button>
         </div>
       </div>
@@ -153,15 +160,15 @@ function UnoGameView({ roomId, navigate }: { roomId: string | undefined; navigat
         <div className="flex justify-between items-center">
           <div>
             <p className="text-sm text-gray-600">
-              Direction: {gameState.direction === 1 ? '→ Clockwise' : '← Counter-clockwise'}
+              {t('direction')}: {gameState.direction === 1 ? t('clockwise') : t('counterclockwise')}
             </p>
             <p className="text-sm text-gray-600">
-              Draw pile: {gameState.drawPileCount} cards
+              {t('drawPile')}: {gameState.drawPileCount} {t('cards')}
             </p>
           </div>
           <div className="text-right">
             <p className="text-sm text-gray-600">
-              Current color:{' '}
+              {t('currentColor')}:{' '}
               <span
                 className="inline-block w-4 h-4 rounded-full align-middle"
                 style={{
@@ -180,14 +187,14 @@ function UnoGameView({ roomId, navigate }: { roomId: string | undefined; navigat
       </div>
 
       <div className="mb-6 text-center">
-        <h2 className="text-lg font-semibold mb-2">Current Card</h2>
+        <h2 className="text-lg font-semibold mb-2">{t('currentCard')}</h2>
         {gameState.currentCard && (
           <UnoCardComponent card={gameState.currentCard} isPlayable={false} />
         )}
       </div>
 
       <div className="mb-6">
-        <h2 className="text-lg font-semibold mb-2">Players</h2>
+        <h2 className="text-lg font-semibold mb-2">{t('players')}</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {gameState.playerCount?.map((player) => (
             <div
@@ -199,10 +206,10 @@ function UnoGameView({ roomId, navigate }: { roomId: string | undefined; navigat
               }`}
             >
               <p className="font-medium text-sm truncate">
-                {player.id === socket?.id ? 'You' : player.id.substring(0, 8)}
+                {player.id === socket?.id ? t('you') : player.id.substring(0, 8)}
               </p>
               <p className="text-xs text-gray-500">
-                {player.cardCount} cards
+                {player.cardCount} {t('cards')}
                 {player.hasCalledUno && ' - UNO!'}
               </p>
             </div>
@@ -211,7 +218,7 @@ function UnoGameView({ roomId, navigate }: { roomId: string | undefined; navigat
       </div>
 
       <div className="mb-6">
-        <h2 className="text-lg font-semibold mb-2">Your Hand</h2>
+        <h2 className="text-lg font-semibold mb-2">{t('yourHand')}</h2>
         <div className="flex flex-wrap gap-2 justify-center">
           {gameState.playerHand?.map((card, index) => (
             <UnoCardComponent
@@ -230,30 +237,30 @@ function UnoGameView({ roomId, navigate }: { roomId: string | undefined; navigat
           disabled={!isMyTurn}
           className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-medium"
         >
-          Draw Card
+          {t('drawCard')}
         </button>
         {canCallUno && (
           <button
             onClick={handleCallUno}
             className="px-6 py-3 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 font-medium"
           >
-            UNO!
+            {t('callUno')}
           </button>
         )}
       </div>
 
       <div className="mt-6 text-center">
         {isMyTurn ? (
-          <p className="text-green-600 font-semibold">It's your turn!</p>
+          <p className="text-green-600 font-semibold">{t('yourTurn')}</p>
         ) : (
-          <p className="text-gray-500">Waiting for other player...</p>
+          <p className="text-gray-500">{t('waitingForOthers')}</p>
         )}
       </div>
 
       {showColorPicker && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-xl">
-            <h3 className="text-lg font-semibold mb-4">Choose a color:</h3>
+            <h3 className="text-lg font-semibold mb-4">{t('chooseColor')}</h3>
             <div className="grid grid-cols-2 gap-4">
               {Object.values(UnoColor)
                 .filter((c) => c !== UnoColor.WILD)
@@ -281,7 +288,7 @@ function UnoGameView({ roomId, navigate }: { roomId: string | undefined; navigat
               }}
               className="mt-4 w-full px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
             >
-              Cancel
+              {t('cancel')}
             </button>
           </div>
         </div>

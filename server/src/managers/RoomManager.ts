@@ -23,7 +23,18 @@ export class RoomManager {
     return result;
   }
 
-  createRoom(hostId: string, nickname: string, gameType: GameType, maxPlayers?: number): Room {
+  createRoom(
+    hostId: string,
+    nickname: string,
+    gameType: GameType,
+    options?: {
+      maxPlayers?: number;
+      name?: string;
+      description?: string;
+      isPrivate?: boolean;
+      password?: string;
+    }
+  ): Room {
     const roomId = this.generateRoomId();
     const player: Player = {
       id: hostId,
@@ -34,18 +45,23 @@ export class RoomManager {
 
     const room: Room = {
       id: roomId,
+      name: options?.name || `${nickname}'s Room`,
+      description: options?.description || '',
       gameType,
       status: RoomStatus.WAITING,
       players: [player],
-      maxPlayers: maxPlayers || DEFAULT_MAX_PLAYERS[gameType],
-      createdAt: new Date()
+      maxPlayers: options?.maxPlayers || DEFAULT_MAX_PLAYERS[gameType],
+      isPrivate: options?.isPrivate ?? false,
+      password: options?.password || null,
+      createdAt: Date.now(),
+      hostId
     };
 
     this.rooms.set(roomId, room);
     return room;
   }
 
-  joinRoom(roomId: string, playerId: string, nickname: string): { success: boolean; room?: Room; error?: string } {
+  joinRoom(roomId: string, playerId: string, nickname: string, password?: string): { success: boolean; room?: Room; error?: string } {
     const room = this.rooms.get(roomId);
 
     if (!room) {
@@ -62,6 +78,11 @@ export class RoomManager {
 
     if (room.players.some(p => p.id === playerId)) {
       return { success: false, error: 'Already in room' };
+    }
+
+    // Password check
+    if (room.password && room.password !== password) {
+      return { success: false, error: 'Invalid password' };
     }
 
     const player: Player = {
@@ -96,10 +117,35 @@ export class RoomManager {
     }
 
     // If the host left, assign new host
-    if (room.players.length > 0 && !room.players.some(p => p.isHost)) {
+    if (playerId === room.hostId) {
+      room.hostId = room.players[0].id;
       room.players[0].isHost = true;
     }
 
+    return { success: true, room };
+  }
+
+  kickPlayer(roomId: string, hostId: string, targetId: string): { success: boolean; room?: Room; error?: string } {
+    const room = this.rooms.get(roomId);
+
+    if (!room) {
+      return { success: false, error: 'Room not found' };
+    }
+
+    if (room.hostId !== hostId) {
+      return { success: false, error: 'Only the host can kick players' };
+    }
+
+    if (hostId === targetId) {
+      return { success: false, error: 'Cannot kick yourself' };
+    }
+
+    const playerIndex = room.players.findIndex(p => p.id === targetId);
+    if (playerIndex === -1) {
+      return { success: false, error: 'Player not found in room' };
+    }
+
+    room.players.splice(playerIndex, 1);
     return { success: true, room };
   }
 
@@ -141,6 +187,12 @@ export class RoomManager {
 
   getAllRooms(): Room[] {
     return Array.from(this.rooms.values());
+  }
+
+  getPublicRooms(): Room[] {
+    return Array.from(this.rooms.values()).filter(
+      r => !r.isPrivate && r.status === RoomStatus.WAITING
+    );
   }
 
   canStartGame(roomId: string): boolean {

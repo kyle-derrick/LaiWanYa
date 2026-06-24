@@ -1,19 +1,21 @@
 {
-  "name": "game-platform",
+  "name": "laiwanya",
   "version": "1.0.0",
-  "private": true,
-  "workspaces": [
-    "client",
-    "server"
-  ],
+  "description": "来玩吖 - 多人在线桌游平台 (Multiplayer Online Board Game Platform)",
   "scripts": {
-    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
-    "dev:server": "npm run dev -w server",
-    "dev:client": "npm run dev -w client",
-    "build": "npm run build -w server && npm run build -w client",
-    "lint": "npm run lint -w server && npm run lint -w client"
+    "dev": "concurrently \"cd server && npm run dev\" \"cd client && npx vite --port 5173\"",
+    "build": "cd server && npm run build && cd ../client && npm run build",
+    "build:server": "cd server && npm run build",
+    "build:client": "cd client && npm run build",
+    "start": "cd server && node dist/index.js",
+    "install:all": "cd server && npm install && cd ../client && npm install",
+    "clean": "rm -rf server/dist client/dist node_modules/.cache"
   },
-  "devDependencies": {
-    "concurrently": "^8.2.2"
+  "keywords": ["game", "multiplayer", "uno", "monopoly", "mahjong", "liars-bar"],
+  "author": "Kyle-Derrick",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kyle-derrick/LaiWanYa.git"
   }
 }

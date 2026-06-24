@@ -13,16 +13,30 @@ export function setupSocketHandlers(
     console.log(`Player connected: ${socket.id}`);
 
     // Create room
-    socket.on('createRoom', (data: { nickname: string; gameType: GameType; maxPlayers?: number }) => {
-      const room = roomManager.createRoom(socket.id, data.nickname, data.gameType, data.maxPlayers);
+    socket.on('createRoom', (data: {
+      nickname: string;
+      gameType: GameType;
+      maxPlayers?: number;
+      name?: string;
+      description?: string;
+      isPrivate?: boolean;
+      password?: string;
+    }) => {
+      const room = roomManager.createRoom(socket.id, data.nickname, data.gameType, {
+        maxPlayers: data.maxPlayers,
+        name: data.name,
+        description: data.description,
+        isPrivate: data.isPrivate,
+        password: data.password
+      });
       socket.join(room.id);
       socket.emit('roomCreated', { roomId: room.id, room });
-      console.log(`Room created: ${room.id} by ${data.nickname}`);
+      console.log(`Room created: ${room.id} (${room.name}) by ${data.nickname}`);
     });
 
     // Join room
-    socket.on('joinRoom', (data: { roomId: string; nickname: string }) => {
-      const result = roomManager.joinRoom(data.roomId.toUpperCase(), socket.id, data.nickname);
+    socket.on('joinRoom', (data: { roomId: string; nickname: string; password?: string }) => {
+      const result = roomManager.joinRoom(data.roomId.toUpperCase(), socket.id, data.nickname, data.password);
 
       if (!result.success) {
         socket.emit('error', { message: result.error });
@@ -84,6 +98,35 @@ export function setupSocketHandlers(
     socket.on('getRooms', () => {
       const rooms = roomManager.getAllRooms().filter(r => r.status === RoomStatus.WAITING);
       socket.emit('roomsList', { rooms });
+    });
+
+    // Get public rooms for lobby
+    socket.on('getPublicRooms', () => {
+      const rooms = roomManager.getPublicRooms();
+      socket.emit('publicRoomsList', { rooms });
+    });
+
+    // Kick player (host only)
+    socket.on('kickPlayer', (data: { roomId: string; targetId: string }) => {
+      const result = roomManager.kickPlayer(data.roomId.toUpperCase(), socket.id, data.targetId);
+
+      if (!result.success) {
+        socket.emit('error', { message: result.error });
+        return;
+      }
+
+      // Notify kicked player
+      io.to(data.targetId).emit('kicked', { roomId: data.roomId.toUpperCase() });
+
+      // Remove kicked player from socket room
+      const targetSocket = io.sockets.sockets.get(data.targetId);
+      if (targetSocket) {
+        targetSocket.leave(data.roomId.toUpperCase());
+      }
+
+      // Broadcast updated room
+      io.to(data.roomId.toUpperCase()).emit('roomUpdated', { room: result.room });
+      console.log(`Player ${data.targetId} kicked from room ${data.roomId.toUpperCase()}`);
     });
 
     // Get game state (for reconnection / polling)
@@ -227,6 +270,21 @@ export function setupSocketHandlers(
         } catch (e) {
           // Game doesn't support pending actions
         }
+      }
+
+      // Broadcast updated state
+      broadcastGameState(io, roomManager, gameManager, room.id);
+    });
+
+    // Liar's Bar game actions
+    socket.on('liars-bar:action', (data: { action: string; data?: unknown }) => {
+      const room = roomManager.getPlayerRoom(socket.id);
+      if (!room) return;
+
+      const result = gameManager.handleGameAction(room.id, socket.id, data.action, data.data);
+      if (!result.success) {
+        socket.emit('error', { message: result.error });
+        return;
       }
 
       // Broadcast updated state

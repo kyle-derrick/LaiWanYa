@@ -2,6 +2,7 @@ import { GameState, GameStatus, GameResult, GameType } from '../types';
 import { UnoGame } from '../games/uno/UnoGame';
 import { MonopolyGame } from '../games/monopoly/MonopolyGame';
 import { MahjongGame } from '../games/mahjong/MahjongGame';
+import { LiarsBarGame } from '../games/liars-bar/LiarsBarGame';
 
 export interface Game {
   getState(): GameState;
@@ -31,6 +32,9 @@ export class GameManager {
         break;
       case GameType.MAHJONG:
         game = new MahjongGame(playerIds);
+        break;
+      case GameType.LIARS_BAR:
+        game = new LiarsBarGame(playerIds);
         break;
       default:
         throw new Error(`Unknown game type: ${gameType}`);

@@ -1,7 +1,8 @@
 export enum GameType {
   UNO = 'UNO',
   MONOPOLY = 'MONOPOLY',
-  MAHJONG = 'MAHJONG'
+  MAHJONG = 'MAHJONG',
+  LIARS_BAR = 'LIARS_BAR'
 }
 
 export enum RoomStatus {
@@ -25,11 +26,16 @@ export interface Player {
 
 export interface Room {
   id: string;
+  name: string;
+  description: string;
   gameType: GameType;
   status: RoomStatus;
   players: Player[];
   maxPlayers: number;
-  createdAt: Date;
+  isPrivate: boolean;
+  password: string | null;
+  createdAt: number;
+  hostId: string;
 }
 
 export interface GameResult {
@@ -48,5 +54,6 @@ export interface GameState {
 export const DEFAULT_MAX_PLAYERS: Record<GameType, number> = {
   [GameType.UNO]: 4,
   [GameType.MONOPOLY]: 4,
-  [GameType.MAHJONG]: 4
+  [GameType.MAHJONG]: 4,
+  [GameType.LIARS_BAR]: 6
 };

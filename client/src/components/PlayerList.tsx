@@ -3,9 +3,11 @@ import { Player } from '../types';
 interface PlayerListProps {
   players: Player[];
   currentPlayerId: string;
+  isHost?: boolean;
+  onKick?: (playerId: string) => void;
 }
 
-export default function PlayerList({ players, currentPlayerId }: PlayerListProps) {
+export default function PlayerList({ players, currentPlayerId, isHost = false, onKick }: PlayerListProps) {
   return (
     <div className="space-y-2">
       <h3 className="text-lg font-semibold text-gray-700">Players</h3>
@@ -34,13 +36,23 @@ export default function PlayerList({ players, currentPlayerId }: PlayerListProps
               </span>
             )}
           </div>
-          <span
-            className={`text-sm ${
-              player.isReady ? 'text-green-600' : 'text-gray-500'
-            }`}
-          >
-            {player.isReady ? 'Ready' : 'Not Ready'}
-          </span>
+          <div className="flex items-center gap-2">
+            <span
+              className={`text-sm ${
+                player.isReady ? 'text-green-600' : 'text-gray-500'
+              }`}
+            >
+              {player.isReady ? 'Ready' : 'Not Ready'}
+            </span>
+            {isHost && player.id !== currentPlayerId && onKick && (
+              <button
+                onClick={() => onKick(player.id)}
+                className="px-2 py-1 text-xs bg-red-100 text-red-600 rounded hover:bg-red-200"
+              >
+                Kick
+              </button>
+            )}
+          </div>
         </div>
       ))}
     </div>
